@@ -1,0 +1,14 @@
+apiVersion: skaffold/v2beta2
+kind: Config
+build:
+  tagPolicy:
+    envTemplate:
+      template: "{{.SKAFFOLD_TAG}}"
+  artifacts:
+    - image: 728099990403.dkr.ecr.ap-northeast-2.amazonaws.com/spaceone-dev/aws-spot-controller
+      context: ./
+deploy:
+  kubectl:
+    manifests:
+      - ./deployments.yml
+      - ./aws-plugin-svc.yml
