@@ -22,12 +22,13 @@ class EC2Connector(BaseConnector):
         self.session = None
         self.ec2_client = None
 
-    def verify(self, secret_data, region_name):
-        self.set_connect(secret_data, region_name)
+    def verify(self, secret_data):
+        self.set_connect(secret_data)
         return "ACTIVE"
 
-    def set_connect(self, secret_data, region_name, service="ec2"):
-        session = self.get_session(secret_data, region_name)
+    def set_connect(self, secret_data, service="ec2"):
+        region_name = secret_data['region_name']
+        session = self.get_session(secret_data)
         aws_conf = {}
         aws_conf['region_name'] = region_name
 
@@ -39,7 +40,8 @@ class EC2Connector(BaseConnector):
             client = session.client(service, region_name=region_name)
         return client, resource
 
-    def get_session(self, secret_data, region_name):
+    def get_session(self, secret_data):
+        region_name = secret_data['region_name']
         params = {
             'aws_access_key_id': secret_data['aws_access_key_id'],
             'aws_secret_access_key': secret_data['aws_secret_access_key'],
@@ -66,33 +68,9 @@ class EC2Connector(BaseConnector):
 
         return session
 
-    def set_client(self, secret_data, region_name):
-        self.session = self.get_session(secret_data, region_name)
+    def set_client(self, secret_data):
+        self.session = self.get_session(secret_data)
         self.ec2_client = self.session.client('ec2')
-
-    def start_instances(self, instance_id, **query):
-        try:
-            response = self.ec2_client.start_instances(InstanceIds=[instance_id], **query)
-            _LOGGER.info(f'[EC2Connector] Start instances : {response}')
-            return response
-        except Exception as e:
-            _LOGGER.error(f'[EC2Connector] start_instances error: {e}')
-
-    def stop_instances(self, instance_id, **query):
-        try:
-            response = self.ec2_client.stop_instances(InstanceIds=[instance_id], Force=True, **query)
-            _LOGGER.info(f'[EC2Connector] Stop instances : {response}')
-            return response
-        except Exception as e:
-            _LOGGER.error(f'[EC2Connector] stop_instances error: {e}')
-
-    def reboot_instance(self, instance_id, **query):
-        try:
-            response = self.ec2_client.reboot_instances(InstanceIds=[instance_id], **query)
-            _LOGGER.info(f'[EC2Connector] Reboot instances : {response}')
-            return response
-        except Exception as e:
-            _LOGGER.error(f'[EC2Connector] Reboot_instances error: {e}')
 
     def get_ec2_instance(self, instance_id):
         try:
@@ -101,3 +79,27 @@ class EC2Connector(BaseConnector):
             return response['Reservations'][0]['Instances'][0]
         except Exception as e:
             _LOGGER.error(f'[EC2Connector] get_ec2_instance error: {e}')
+
+    def get_ec2_instance_status(self, instance_id):
+        try:
+            response = self.ec2_client.describe_instance_status(InstanceIds=[instance_id])
+            _LOGGER.debug(f'[EC2Connector] get_ec2_instance_status response : {response}')
+            return response['InstanceStatuses'][0]['InstanceState']['Name']
+        except Exception as e:
+            _LOGGER.error(f'[EC2Connector] get_ec2_instance_status error: {e}')
+
+    def run_instances(self, input):
+        try:
+            response = self.ec2_client.run_instances(input)
+            _LOGGER.debug(f'[EC2Connector] run_instances response : {response}')
+            return response['Instances'][0]
+        except Exception as e:
+            _LOGGER.error(f'[EC2Connector] run_instances error: {e}')
+
+    def terminate_instances(self, instance_id):
+        try:
+            response = self.ec2_client.terminate_instances(InstanceIds=[instance_id])
+            _LOGGER.debug(f'[EC2Connector] terminate_instances response : {response}')
+            return response['TerminatingInstances'][0]
+        except Exception as e:
+            _LOGGER.error(f'[EC2Connector] terminate_instances error: {e}')
