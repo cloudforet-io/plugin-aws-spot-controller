@@ -23,7 +23,7 @@ _TEMPLATE = {
                 {
                     'Valiable': 'response',
                     'StringEquals': 'Success',
-                    'Next': 'createSpotInstance'
+                    'Next': 'requestQueryToGetInstanceSpec'
                 },
                 {
                     'Valiable': 'response',
@@ -31,6 +31,16 @@ _TEMPLATE = {
                     'Next': 'finish'
                 }
             ]
+        },
+        'requestQueryToGetInstanceSpec': {
+            'Type': 'RequestQuery',
+            'Next': 'requestQueryToGetCandidateInfo',
+            'Query': 'select * from table where instanceType == {instanceType}'
+        },
+        'requestQueryToGetCandidateInfo': {
+            'Type': 'RequestQuery',
+            'Next': 'createSpotInstance',
+            'Query': 'select * from table where vCPU >= {vCPU} and GPU >= {GPU} and memory >= {memory} and EBSThroughput >= {EBSThroughput}'
         },
         'createSpotInstance': {
             'Type': 'Task',

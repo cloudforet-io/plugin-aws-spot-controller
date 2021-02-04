@@ -19,7 +19,8 @@ class AutoScalingConnector(BaseConnector):
         self.session = None
         self.asg_client = None
 
-    def get_session(self, secret_data, region_name):
+    def get_session(self, secret_data):
+        region_name = secret_data['region_name']
         params = {
             'aws_access_key_id': secret_data['aws_access_key_id'],
             'aws_secret_access_key': secret_data['aws_secret_access_key'],
@@ -45,41 +46,9 @@ class AutoScalingConnector(BaseConnector):
 
         return session
 
-    def set_client(self, secret_data, region_name):
-        self.session = self.get_session(secret_data, region_name)
+    def set_client(self, secret_data):
+        self.session = self.get_session(secret_data)
         self.asg_client = self.session.client('autoscaling')
-
-    def start_auto_scaling(self, asg_name, min_size, desired_capacity, **query):
-        return self.set_asg_desired_capacity_with_min_size(asg_name, min_size, desired_capacity)
-
-    def stop_auto_scaling(self, asg_name, **query):
-        return self.set_asg_desired_capacity_with_min_size(asg_name, 0, 0)
-
-    def set_asg_desired_capacity_with_min_size(self, asg_name, min_size, desired_capacity):
-        try:
-            res = self.asg_client.update_auto_scaling_group(
-                AutoScalingGroupName=asg_name,
-                MinSize=int(min_size),
-                DesiredCapacity=int(desired_capacity),
-            )
-            print('Set asg_desired_capacity :' + str(asg_name) + ', capacity: ' + str(desired_capacity))
-        except botocore.exceptions.ClientError as e:
-            print (e)
-
-            e_arr = str(e).split(':')[1].split(',')
-
-            # An error occurred (ValidationError) when calling the UpdateAutoScalingGroup operation: Max bound, 3, must be greater than or equal to min bound, 5
-            if ' Max bound' == e_arr[0] and ' must be greater than or equal to min bound' == e_arr[2]:
-                max_capacity = int(e_arr[1].strip())
-
-                res = self.asg_client.update_auto_scaling_group(
-                    AutoScalingGroupName=asg_name,
-                    MinSize=max_capacity,
-                    DesiredCapacity=max_capacity,
-                )
-                print('Set asg_desired_capacity(max capacity may be changed by user) :' + str(asg_name) + ', capacity: ' + e_arr[1])
-
-        return res
 
     def get_asg(self, asg_name):
         try:
@@ -92,3 +61,45 @@ class AutoScalingConnector(BaseConnector):
             return response['AutoScalingGroups'][0]
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] get_asg error: {e}')
+
+    def get_asg_instances(self, instance_id):
+        try:
+            response = self.asg_client.describe_auto_scaling_instances(
+                InstanceIds=[
+                    instance_id,
+                ],
+            )
+            _LOGGER.debug(f'[AutoScalingConnector] get_asg_instances response : {response}')
+            return response['AutoScalingInstances'][0]
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] get_asg_instances error: {e}')
+
+    def detach_instances(self, asg_name, instance_id):
+        try:
+            response = self.asg_client.detach_instances(
+                AutoScalingGroupNames=[
+                    asg_name,
+                ],
+                InstanceIds=[
+                    instance_id,
+                ],
+            )
+            _LOGGER.debug(f'[AutoScalingConnector] detach_instances response : {response}')
+            return response['Activities'][0]
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] detach_instances error: {e}')
+
+    def attach_instances(self, asg_name, instance_id):
+        try:
+            response = self.asg_client.attach_instances(
+                AutoScalingGroupNames=[
+                    asg_name,
+                ],
+                InstanceIds=[
+                    instance_id,
+                ],
+            )
+            _LOGGER.debug(f'[AutoScalingConnector] attach_instances response : {response}')
+            return response['Activities'][0]
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] attach_instances error: {e}')
