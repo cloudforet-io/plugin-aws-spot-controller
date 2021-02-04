@@ -1,4 +1,4 @@
 from spaceone.spot_automation.manager.controller_manager import ControllerManager
 from spaceone.spot_automation.manager.plugin_manager import PluginManager
-from spaceone.spot_automation.manager.auto_scailing_manager import AutoScailingManager
+from spaceone.spot_automation.manager.auto_scaling_manager import AutoScalingManager
 from spaceone.spot_automation.manager.instance_manager import InstanceManager

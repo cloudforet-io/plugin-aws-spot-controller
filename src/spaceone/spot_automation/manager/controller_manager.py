@@ -5,7 +5,7 @@ import logging
 import json
 
 from spaceone.core.manager import BaseManager
-from spaceone.spot_automation.manager.auto_scailing_manager import AutoScailingManager
+from spaceone.spot_automation.manager.auto_scaling_manager import AutoScalingManager
 from spaceone.spot_automation.manager.instance_manager import InstanceManager
 
 
@@ -25,7 +25,7 @@ class ControllerManager(BaseManager):
 
     def __init__(self, transaction):
         super().__init__(transaction)
-        self.auto_scailing_manager: AutoScailingManager = self.locator.get_manager('AutoScailingManager')
+        self.auto_scaling_manager: AutoScalingManager = self.locator.get_manager('AutoScalingManager')
         self.instance_manager: InstanceManager = self.locator.get_manager('InstanceManager')
 
     def verify(self, secret_data, region_name):
@@ -58,19 +58,21 @@ class ControllerManager(BaseManager):
                 }
             }
         self.instance_manager.set_client(secret_data)
-        self.auto_scailing_manage.set_client(secret_data)
+        self.auto_scaling_manager.set_client(secret_data)
 
         if action == GET_ANY_UNPROTECTED_OD_INSTANCE:
             target_asg = command['resource_id']
             spot_group_option = command['spot_group_option']
 
-            onDemand_info = self.auto_scailing_manager.getAnyUnprotectedOndemandInstance(target_asg, spot_group_option)
+            onDemand_info = self.auto_scaling_manager.getAnyUnprotectedOndemandInstance(target_asg, spot_group_option)
+            _LOGGER.debug(f'[patch] onDemand_info: {onDemand_info}')
+            if onDemand_info == None:
+                return None
             res['instance_info'] = onDemand_info
             res['common_info'] = {
                 'target_asg': target_asg,
                 'ondemand_instance_id': onDemand_info['InstanceId']
             }
-            return res
 
         elif action == CREATE_SPOT_INSTANCE:
             based_instance_id = command['common_info']['ondemand_instance_id']
@@ -83,24 +85,22 @@ class ControllerManager(BaseManager):
             res['common_info'] = {
                 'spot_instance_id': spot_info['InstanceId']
             }
-            return res
 
         elif action == IS_CREATED_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
 
             result = self.instance_manager.isCreatedSpotInstance(spot_instance_id)
             res['response'] = result
-            return res
 
         elif action == DETACH_OD_INSTANCE:
             ondemand_instance_id = command['common_info']['ondemand_instance_id']
             target_asg = command['common_info']['target_asg']
-            self.auto_scailing_manager.detachOdInstance(ondemand_instance_id, target_asg)
+            self.auto_scaling_manager.detachOdInstance(ondemand_instance_id, target_asg)
 
         elif action == ATTACH_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
             target_asg = command['common_info']['target_asg']
-            self.auto_scailing_manager.attachSpotInstance(spot_instance_id, target_asg)
+            self.auto_scaling_manager.attachSpotInstance(spot_instance_id, target_asg)
 
         elif action == TERMINATE_OD_INSTANCE:
             ondemand_instance_id = command['common_info']['ondemand_instance_id']

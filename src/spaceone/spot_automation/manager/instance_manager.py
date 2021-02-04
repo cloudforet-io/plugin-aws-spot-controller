@@ -1,7 +1,7 @@
 import logging
 
 from spaceone.core.manager import BaseManager
-from spaceone.spot_automation.manager.auto_scailing_manager import AutoScailingManager
+from spaceone.spot_automation.connector.auto_scaling_connector import AutoScalingConnector
 from spaceone.spot_automation.connector.ec2_connector import EC2Connector
 
 _LOGGER = logging.getLogger(__name__)
@@ -11,11 +11,12 @@ class InstanceManager(BaseManager):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.ec2_connector: EC2Connector = self.locator.get_manager('EC2Connector')
-        self.auto_scailing_manager: AutoScailingManager = self.locator.get_manager('AutoScailingManager')
+        self.ec2_connector: EC2Connector = self.locator.get_connector('EC2Connector')
+        self.auto_scaling_connector: AutoScalingConnector = self.locator.get_connector('AutoScalingConnector')
 
     def set_client(self, secret_data):
         self.ec2_connector.set_client(secret_data)
+        self.auto_scaling_connector.set_client(secret_data)
 
     def get_ec2_instance(self, resource_id):
         return self.ec2_connector.get_ec2_instance(resource_id)
@@ -54,7 +55,7 @@ class InstanceManager(BaseManager):
             }
 
             
-            instance = self.auto_scailing_manager.getAsgInstance(based_instance_id)
+            instance = self.auto_scaling_connector.get_asg_instances(based_instance_id)
             if 'LaunchTemplate' in instance:
                 #[TODO] Add input from launch template (ec2)
                 launchTemplateId = instance['LaunchTemplateId']
