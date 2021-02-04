@@ -64,5 +64,6 @@ class ControllerService(BaseService):
         command = params['command']
 
         res = self.controller_manager.patch(secret_data, action, command)
-
-        return res
+        result = {}
+        result['data'] = res
+        return result

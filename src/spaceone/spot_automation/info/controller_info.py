@@ -1,5 +1,5 @@
 
-__all__ = ['PluginInfo', 'ResourceInfo', 'ControllerVerifyInfo', 'RetryResourceStatusInfo', 'UpdateInfo']
+__all__ = ['PluginInfo', 'ResourceInfo', 'ControllerVerifyInfo', 'RetryResourceStatusInfo', 'UpdateInfo', 'ResponseInfo']
 
 import functools
 
@@ -12,6 +12,10 @@ def ResourceInfo(resource_dict):
 def PluginInfo(result):
     result['metadata'] = change_struct_type(result['metadata'])
     return controller_pb2.PluginInfo(**result)
+
+def ResponseInfo(result):
+    result['data'] = change_struct_type(result['data'])
+    return controller_pb2.ResponseInfo(**result)
 
 def UpdateInfo(resource_dict):
     return controller_pb2.UpdateInfo(**resource_dict)

@@ -29,5 +29,5 @@ class Controller(BaseAPI, controller_pb2_grpc.ControllerServicer):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('ControllerService', metadata) as controller_svc:
-            controller_svc.patch(params)
-            return self.locator.get_info('EmptyInfo')
+            result = controller_svc.patch(params)
+            return self.locator.get_info('ResponseInfo', result)
