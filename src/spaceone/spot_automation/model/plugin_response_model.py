@@ -21,19 +21,17 @@ _TEMPLATE = {
         },
         'hasOndemandInstance': {
             'Type': 'Choice',
+            'RequestType': 'byPass',
+            'RequestTarget': 'aws-spot-controller',
             'Choices': [
                 {
                     'Valiable': 'response',
                     'StringEquals': 'Success',
-                    'RequestType': 'byPass',
-                    'RequestTarget': 'aws-spot-controller',
                     'Next': 'requestQueryToGetInstanceSpec'
                 },
                 {
                     'Valiable': 'response',
                     'StringEquals': 'Fail',
-                    'RequestType': 'byPass',
-                    'RequestTarget': 'aws-spot-controller',
                     'Next': 'finish'
                 }
             ]

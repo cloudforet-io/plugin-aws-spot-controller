@@ -25,7 +25,7 @@ class InstanceManager(BaseManager):
         return False
 
     def run_instances(self, input):
-        self.ec2_connector.run_instances(**input)
+        return self.ec2_connector.run_instances(input)
 
     def terminateOdInstance(self, instance_id):
         self.ec2_connector.terminate_instances(instance_id)

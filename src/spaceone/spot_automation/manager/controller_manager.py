@@ -80,12 +80,14 @@ class ControllerManager(BaseManager):
             based_instance_id = command['common_info']['ondemand_instance_id']
             target_asg = command['common_info']['target_asg']
             candidate_instance_types_info = command['candidate_instance_types_info']
-
             spot_info = self._createSpotInstance(based_instance_id, target_asg, candidate_instance_types_info)
-            res['response'] = spot_info
-            res['common_info'] = {
-                'spot_instance_id': spot_info['InstanceId']
-            }
+            _LOGGER.debug(f'[patch] spot_info: {spot_info}')
+            if spot_info != None:
+                res['common_info'] = {
+                    'target_asg': target_asg,
+                    'ondemand_instance_id': based_instance_id,
+                    'spot_instance_id': spot_info['InstanceId']
+                }
 
         elif action == IS_CREATED_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
@@ -171,7 +173,7 @@ class ControllerManager(BaseManager):
                 'SecurityGroupIds': securityGroupIds,
 
                 'SubnetId': subnetId,
-                'TagSpecifications': tagList
+                'TagSpecifications': [tagList]
             }
             
             instance = self.auto_scaling_manager.getAsgInstance(based_instance_id)
@@ -221,6 +223,6 @@ class ControllerManager(BaseManager):
         #[TODO] Check tag info from launch template or launch configuration
 
         for tag in pre_tags:
-            if tag['Key'] != 'launched-by-alivespot' and tag['Key'] != "launched-for-asg":
+            if 'aws:' not in tag['Key'] and tag['Key'] != 'launched-by-alivespot' and tag['Key'] != "launched-for-asg":
                 tags['Tags'].append(tag)
         return tags

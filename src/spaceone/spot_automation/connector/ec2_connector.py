@@ -90,7 +90,7 @@ class EC2Connector(BaseConnector):
 
     def run_instances(self, input):
         try:
-            response = self.ec2_client.run_instances(input)
+            response = self.ec2_client.run_instances(**input)
             _LOGGER.debug(f'[EC2Connector] run_instances response : {response}')
             return response['Instances'][0]
         except Exception as e:
