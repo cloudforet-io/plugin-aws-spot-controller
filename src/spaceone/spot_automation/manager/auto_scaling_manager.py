@@ -28,3 +28,7 @@ class AutoScalingManager(BaseManager):
 
     def attachSpotInstance(self, instance_id, target_asg):
         self.auto_scaling_connector.attach_instances(instance_id, target_asg)
+
+    def getLaunchConfiguration(self, lc_name):
+        lc = self.auto_scaling_connector.describe_launch_configurations(lc_name)
+        return lc

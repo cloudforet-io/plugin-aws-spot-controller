@@ -29,3 +29,12 @@ class InstanceManager(BaseManager):
 
     def terminateOdInstance(self, instance_id):
         self.ec2_connector.terminate_instances(instance_id)
+
+    def getNetworkInterfaces(self, lt_id, ver):
+        lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
+        if lt is not None:
+            nis = lt['LaunchTemplateData']['NetworkInterfaces']
+		if len(nis) > 0:
+			return True, nis
+
+	    return False, None

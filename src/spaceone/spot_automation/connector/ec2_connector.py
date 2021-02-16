@@ -103,3 +103,11 @@ class EC2Connector(BaseConnector):
             return response['TerminatingInstances'][0]
         except Exception as e:
             _LOGGER.error(f'[EC2Connector] terminate_instances error: {e}')
+
+    def describe_launch_template_versions(self, lt_id, ver):
+        try:
+            response = self.ec2_client.describe_launch_template_versions(LaunchTemplateId=[lt_id], Versions=[ver])
+            _LOGGER.debug(f'[EC2Connector] describe_launch_template_versions response : {response}')
+            return response['LaunchTemplateVersions'][0]
+        except Exception as e:
+            _LOGGER.error(f'[EC2Connector] describe_launch_template_versions error: {e}')
