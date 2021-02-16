@@ -123,6 +123,14 @@ class ControllerManager(BaseManager):
         _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] asg: {asg}')
         if asg == None:
             return None
+
+        # Check minimum ondemand instance count with spot_group_option
+        if 'min_ondemand_size' in spot_group_option:
+            ondemandCount = self._getOndemandCount(asg)
+            if spot_group_option['min_ondemand_size'] >= ondemandCount
+                _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less than request, ondemandCount: {ondemandCount}')
+                return None
+
         for instance_info in asg['Instances']:
             isProtectedFromScaleIn = instance_info['ProtectedFromScaleIn']
             if isProtectedFromScaleIn:
@@ -133,12 +141,22 @@ class ControllerManager(BaseManager):
             _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] instance: {instance}')
             if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == 'spot':
                 continue
-
-            #[TODO] Add ondemand instance count check logic with spot_group_option
             
             return instance_info
 
         return None
+
+    def _getOndemandCount(self, asg):
+        odNum = 0
+        for instance_info in asg['Instances']:
+            instance_id = instance_info['InstanceId']
+            instance = self.instance_manager.get_ec2_instance(instance_id)
+            state = instance['State']['Name']
+            if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == 'scheduled' and \
+                state == 'running':
+                odNum += 1
+
+        return odNum
 
     def _createSpotInstance(self, based_instance_id, target_asg, candidate_instance_types_info):
         based_info = self.instance_manager.get_ec2_instance(based_instance_id)
@@ -150,7 +168,6 @@ class ControllerManager(BaseManager):
 
             # Request input from based ondemand instance
             securityGroupIds = self._convertSecurityGroups(based_info['SecurityGroups'])
-            tagList = self._generateTagsList(based_info['Tags'], target_asg)
             subnetId = ''
             if 'SubnetId' in based_info:
                 subnetId = based_info['SubnetId']
@@ -172,14 +189,13 @@ class ControllerManager(BaseManager):
 
                 'SecurityGroupIds': securityGroupIds,
 
-                'SubnetId': subnetId,
-                'TagSpecifications': [tagList]
+                'SubnetId': subnetId
             }
             
             instance = self.auto_scaling_manager.getAsgInstance(based_instance_id)
             _LOGGER.debug(f'[_createSpotInstance] instance: {instance}')
             if 'LaunchTemplate' in instance:
-                #[TODO] Add input from launch template (ec2)
+                # Add input from launch template
                 launchTemplate = instance['LaunchTemplate']
                 launchTemplateId = launchTemplate['LaunchTemplateId']
                 launchTemplateName = launchTemplate['LaunchTemplateName']
@@ -188,16 +204,97 @@ class ControllerManager(BaseManager):
                     'LaunchTemplateId': launchTemplateId,
                     'Version': launchTemplateVersion
                 }
+                having, nis = self.instance_manager.getNetworkInterfaces(launchTemplateId, launchTemplateVersion)
+                if having:
+                    networkInterfaces = []
+                    for ni in nis:
+                        networkInterface = {
+                            'AssociatePublicIpAddress': ni['AssociatePublicIpAddress'],
+                            'SubnetId': subnetId,
+                            'DeviceIndex': ni['DeviceIndex'],
+                            'Groups': securityGroupIds
+                        }
+                        networkInterfaces.append(networkInterface)
+                    input_request['NetworkInterfaces'] = networkInterfaces
+                    input_request['SecurityGroupIds'] = None
+                    input_request['SubnetId'] = None
 
             elif 'LaunchConfigurationName' in instance:
-                #[TODO] Add input from launch configuration (asg)
-                launchConfiguration = instance['LaunchConfigurationName']
+                # Add input from launch configuration
+                lcName = instance['LaunchConfigurationName']
+                lc = self.auto_scaling_manager.getLaunchConfiguration(lcName)
+                if 'KeyName' in lc and lc['KeyName'] is not None:
+                    input_request['KeyName'] = lc['KeyName']
+
+                if 'IamInstanceProfile' in lc:
+                    if 'arn:aws:iam:' in lc['IamInstanceProfile']:
+                        input_request['IamInstanceProfile'] = {
+                            'Arn': lc['IamInstanceProfile']
+                        }
+                    else:
+                        input_request['IamInstanceProfile'] = {
+                            'Name': lc['IamInstanceProfile']
+                        }
+                input_request['ImageId'] = lc['ImageId']
+                input_request['UserData'] = lc['UserData']
+
+                BDMs := self._convertBlockDeviceMappings(lc)
+                if len(BDMs) > 0:
+                    input_request['BlockDeviceMappings'] = BDMs
+
+                if 'InstanceMonitoring' in lc:
+                    input_request['Monitoring'] = {
+                        'Enabled': lc['InstanceMonitoring']['Enabled']
+                    }
+
+                if 'AssociatePublicIpAddress' in lc or subnetId != None {
+                    # Instances are running in a VPC
+                    input_request['NetworkInterfaces'] = {
+                        'AssociatePublicIpAddress': lc['AssociatePublicIpAddress'],
+                        'DeviceIndex': 0,
+                        'SubnetId': subnetId,
+                        'Groups': securityGroupIds,
+                    }
+                    input_request['SecurityGroupIds'] = None
+                    input_request['SubnetId'] = None
+
+            tagList = self._generateTagsList(based_info['Tags'], target_asg, instance)
+            input_request['TagSpecifications'] = [tagList]
 
             # Run instance with input
             _LOGGER.debug(f'[_createSpotInstance] input_request: {input_request}')
             spot_info = self.instance_manager.run_instances(input_request)
 
         return spot_info
+
+    def _convertBlockDeviceMappings(self, lc):
+        bds = []
+	    if lc is None or 'BlockDeviceMappings' not in lc or len(lc['BlockDeviceMappings']) == 0:
+            _LOGGER.debug(f'[_convertBlockDeviceMappings] Missing block device mappings')
+		return bds
+
+        for lcBDM in lc['BlockDeviceMappings']:
+            ec2BDM = {
+                'DeviceName': lcBDM['DeviceName'],
+                'VirtualName': lcBDM['VirtualName']
+            }
+
+            if 'Ebs' in lcBDM:
+                ec2BDM['Ebs'] = {
+                    'DeleteOnTermination': lcBDM['Ebs']['DeleteOnTermination'],
+                    'Encrypted': lcBDM['Ebs']['Encrypted'],
+                    'Iops': lcBDM['Ebs']['Iops'],
+                    'SnapshotId': lcBDM['Ebs']['SnapshotId'],
+                    'VolumeSize': lcBDM['Ebs']['VolumeSize'],
+                    'VolumeType': lcBDM['Ebs']['VolumeType']
+                }
+
+            # Handle the noDevice field directly by skipping the device if set to true
+            if 'NoDevice' in lcBDM and lcBDM['NoDevice']:
+                continue
+            bds.append(ec2BDM)
+
+        return bds
 
     def _convertSecurityGroups(self, security_groups):
         groupIDs = []
@@ -206,7 +303,7 @@ class ControllerManager(BaseManager):
             groupIDs.append(groupId)
         return groupIDs
 
-    def _generateTagsList(self, pre_tags, asg_name):
+    def _generateTagsList(self, pre_tags, asg_name, instance):
         tags = {
             'ResourceType': 'instance',
             'Tags': [
@@ -220,9 +317,32 @@ class ControllerManager(BaseManager):
                 }
             ]
         }
-        #[TODO] Check tag info from launch template or launch configuration
+
+        # Append tag info about launch template or launch configuration
+        if 'LaunchTemplate' in instance:
+            launchTemplate = instance['LaunchTemplate']
+            lt_tags = [
+                {
+                    'Key': 'LaunchTemplateID',
+                    'Value': launchTemplate['LaunchTemplateId']
+                },
+                {
+                    'Key': 'LaunchTemplateVersion',
+                    'Value': launchTemplate['Version']
+                }
+            ]
+            for lt_tag in lt_tags:
+                tags['Tags'].append(lt_tag)
+        elif 'LaunchConfigurationName' in instance:
+            lc_tag = {
+                'Key': 'LaunchConfigurationName',
+                'Value': instance['LaunchConfigurationName']
+            }
+            tags['Tags'].append(lc_tag)
 
         for tag in pre_tags:
-            if 'aws:' not in tag['Key'] and tag['Key'] != 'launched-by-alivespot' and tag['Key'] != "launched-for-asg":
+            if 'aws:' not in tag['Key'] and tag['Key'] != 'launched-by-alivespot' and \ 
+                tag['Key'] != "launched-for-asg" and tag['Key'] != "LaunchTemplateID" and \
+                tag['Key'] != "LaunchTemplateVersion" and tag['Key'] != "LaunchConfiguationName":
                 tags['Tags'].append(tag)
         return tags

@@ -103,3 +103,15 @@ class AutoScalingConnector(BaseConnector):
             return response['Activities'][0]
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] attach_instances error: {e}')
+
+    def describe_launch_configurations(self, lc_name):
+        try:
+            response = self.asg_client.describe_launch_configurations(
+                LaunchConfigurationNames=[
+                    lc_name,
+                ],
+            )
+            _LOGGER.debug(f'[AutoScalingConnector] describe_launch_configurations response : {response}')
+            return response['LaunchConfigurations'][0]
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] describe_launch_configurations error: {e}')
