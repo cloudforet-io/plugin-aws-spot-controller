@@ -41,6 +41,7 @@ class ControllerManager(BaseManager):
     def patch(self, secret_data, action, command):
         _LOGGER.debug(f'[patch] action: {action}')
         _LOGGER.debug(f'[patch] command: {command}')
+        _LOGGER.debug(f'[patch] secret_data: {secret_data}')
         res = {}
         if 'common_info' in command:
             target_asg = ''
@@ -64,17 +65,22 @@ class ControllerManager(BaseManager):
 
         if action == GET_ANY_UNPROTECTED_OD_INSTANCE:
             asg_name = command['resource_id']
-            spot_group_option = command['spot_group_option']
+            spot_group_option = None
+            if 'spot_group_option' in command:
+                spot_group_option = command['spot_group_option']
 
             onDemand_info = self._getAnyUnprotectedOndemandInstance(asg_name, spot_group_option)
             _LOGGER.debug(f'[patch] onDemand_info: {onDemand_info}')
             if onDemand_info == None:
-                return None
+                res['response'] = 'Fail'
+                return res
             res['instance_info'] = onDemand_info
             res['common_info'] = {
                 'target_asg': asg_name,
                 'ondemand_instance_id': onDemand_info['InstanceId']
             }
+            res['query_input_param'] = {'instanceType': onDemand_info['InstanceType']}
+            res['response'] = 'Success'
 
         elif action == CREATE_SPOT_INSTANCE:
             based_instance_id = command['common_info']['ondemand_instance_id']
@@ -125,7 +131,7 @@ class ControllerManager(BaseManager):
             return None
 
         # Check minimum ondemand instance count with spot_group_option
-        if 'min_ondemand_size' in spot_group_option:
+        if spot_group_option and 'min_ondemand_size' in spot_group_option:
             ondemandCount = self._getOndemandCount(asg)
             if spot_group_option['min_ondemand_size'] >= ondemandCount:
                 _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less than request, ondemandCount: {ondemandCount}')
@@ -180,7 +186,7 @@ class ControllerManager(BaseManager):
                 'InstanceMarketOptions': {
                     'MarketType': 'spot',
                     'SpotOptions': {
-                        'MaxPrice': price,
+                        'MaxPrice': str(price),
                     },
                 },
 

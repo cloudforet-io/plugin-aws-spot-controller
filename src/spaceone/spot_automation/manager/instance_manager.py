@@ -32,7 +32,7 @@ class InstanceManager(BaseManager):
 
     def getNetworkInterfaces(self, lt_id, ver):
         lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
-        if lt is not None:
+        if lt is not None and 'NetworkInterfaces' in lt['LaunchTemplateData']:
             nis = lt['LaunchTemplateData']['NetworkInterfaces']
             if len(nis) > 0:
                 return True, nis
