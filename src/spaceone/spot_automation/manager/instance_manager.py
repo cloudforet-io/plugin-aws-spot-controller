@@ -21,8 +21,8 @@ class InstanceManager(BaseManager):
     def isCreatedSpotInstance(self, instance_id):
         instanceState = self.ec2_connector.get_ec2_instance_status(instance_id)
         if instanceState == 'running':
-            return True
-        return False
+            return 'Success'
+        return 'Fail'
 
     def run_instances(self, input):
         return self.ec2_connector.run_instances(input)
