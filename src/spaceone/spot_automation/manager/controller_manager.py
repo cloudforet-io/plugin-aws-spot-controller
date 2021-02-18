@@ -127,7 +127,7 @@ class ControllerManager(BaseManager):
         # Check minimum ondemand instance count with spot_group_option
         if 'min_ondemand_size' in spot_group_option:
             ondemandCount = self._getOndemandCount(asg)
-            if spot_group_option['min_ondemand_size'] >= ondemandCount
+            if spot_group_option['min_ondemand_size'] >= ondemandCount:
                 _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less than request, ondemandCount: {ondemandCount}')
                 return None
 
@@ -161,6 +161,9 @@ class ControllerManager(BaseManager):
     def _createSpotInstance(self, based_instance_id, target_asg, candidate_instance_types_info):
         based_info = self.instance_manager.get_ec2_instance(based_instance_id)
         _LOGGER.debug(f'[_createSpotInstance] based_info: {based_info}')
+
+        if based_info is None:
+            raise ERROR_NOT_FOUND(key='based_info', value=based_info)
 
         for candidate_type_info in candidate_instance_types_info:
             candidate_type = candidate_type_info['type']
@@ -238,7 +241,7 @@ class ControllerManager(BaseManager):
                 input_request['ImageId'] = lc['ImageId']
                 input_request['UserData'] = lc['UserData']
 
-                BDMs := self._convertBlockDeviceMappings(lc)
+                BDMs = self._convertBlockDeviceMappings(lc)
                 if len(BDMs) > 0:
                     input_request['BlockDeviceMappings'] = BDMs
 
@@ -247,7 +250,7 @@ class ControllerManager(BaseManager):
                         'Enabled': lc['InstanceMonitoring']['Enabled']
                     }
 
-                if 'AssociatePublicIpAddress' in lc or subnetId != None {
+                if 'AssociatePublicIpAddress' in lc or subnetId != None:
                     # Instances are running in a VPC
                     input_request['NetworkInterfaces'] = {
                         'AssociatePublicIpAddress': lc['AssociatePublicIpAddress'],
@@ -269,9 +272,9 @@ class ControllerManager(BaseManager):
 
     def _convertBlockDeviceMappings(self, lc):
         bds = []
-	    if lc is None or 'BlockDeviceMappings' not in lc or len(lc['BlockDeviceMappings']) == 0:
+        if lc is None or 'BlockDeviceMappings' not in lc or len(lc['BlockDeviceMappings']) == 0:
             _LOGGER.debug(f'[_convertBlockDeviceMappings] Missing block device mappings')
-		return bds
+            return bds
 
         for lcBDM in lc['BlockDeviceMappings']:
             ec2BDM = {
@@ -309,11 +312,11 @@ class ControllerManager(BaseManager):
             'Tags': [
                 {
                     'Key': 'launched-by-alivespot',
-                    'Value': 'true',
+                    'Value': 'true'
                 },
                 {
                     'Key': 'launched-for-asg',
-                    'Value': asg_name,
+                    'Value': asg_name
                 }
             ]
         }
@@ -341,7 +344,7 @@ class ControllerManager(BaseManager):
             tags['Tags'].append(lc_tag)
 
         for tag in pre_tags:
-            if 'aws:' not in tag['Key'] and tag['Key'] != 'launched-by-alivespot' and \ 
+            if 'aws:' not in tag['Key'] and tag['Key'] != 'launched-by-alivespot' and \
                 tag['Key'] != "launched-for-asg" and tag['Key'] != "LaunchTemplateID" and \
                 tag['Key'] != "LaunchTemplateVersion" and tag['Key'] != "LaunchConfiguationName":
                 tags['Tags'].append(tag)

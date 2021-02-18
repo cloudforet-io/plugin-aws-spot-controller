@@ -34,7 +34,7 @@ class InstanceManager(BaseManager):
         lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
         if lt is not None:
             nis = lt['LaunchTemplateData']['NetworkInterfaces']
-		if len(nis) > 0:
-			return True, nis
+            if len(nis) > 0:
+                return True, nis
 
-	    return False, None
+        return False, None
