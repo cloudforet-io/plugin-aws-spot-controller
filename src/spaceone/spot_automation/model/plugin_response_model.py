@@ -14,12 +14,6 @@ _TEMPLATE = {
     'StartAt': 'getAnyUnprotectedOndemandInstance',
     'States': {
         'getAnyUnprotectedOndemandInstance': {
-            'Type': 'Task',
-            'RequestType': 'byPass',
-            'RequestTarget': 'aws-spot-controller',
-            'Next': 'hasOndemandInstance'
-        },
-        'hasOndemandInstance': {
             'Type': 'Choice',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',

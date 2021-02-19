@@ -21,8 +21,8 @@ class InstanceManager(BaseManager):
     def isCreatedSpotInstance(self, instance_id):
         instanceState = self.ec2_connector.get_ec2_instance_status(instance_id)
         if instanceState == 'running':
-            return True
-        return False
+            return 'Success'
+        return 'Fail'
 
     def run_instances(self, input):
         return self.ec2_connector.run_instances(input)
@@ -32,9 +32,9 @@ class InstanceManager(BaseManager):
 
     def getNetworkInterfaces(self, lt_id, ver):
         lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
-        if lt is not None:
+        if lt is not None and 'NetworkInterfaces' in lt['LaunchTemplateData']:
             nis = lt['LaunchTemplateData']['NetworkInterfaces']
-		if len(nis) > 0:
-			return True, nis
+            if len(nis) > 0:
+                return True, nis
 
-	    return False, None
+        return False, None

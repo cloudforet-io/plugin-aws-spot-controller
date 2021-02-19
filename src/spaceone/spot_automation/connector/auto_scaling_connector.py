@@ -28,6 +28,7 @@ class AutoScalingConnector(BaseConnector):
         }
 
         session = Session(**params)
+        _LOGGER.debug(f'[AutoScalingConnector] get_session session : {session}')
 
         # ASSUME ROLE
         if role_arn := secret_data.get('role_arn'):
@@ -74,33 +75,28 @@ class AutoScalingConnector(BaseConnector):
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] get_asg_instances error: {e}')
 
-    def detach_instances(self, asg_name, instance_id):
+    def detach_instances(self, instance_id, asg_name):
         try:
             response = self.asg_client.detach_instances(
-                AutoScalingGroupNames=[
-                    asg_name,
-                ],
+                AutoScalingGroupName=asg_name,
                 InstanceIds=[
                     instance_id,
                 ],
+                ShouldDecrementDesiredCapacity=True
             )
             _LOGGER.debug(f'[AutoScalingConnector] detach_instances response : {response}')
-            return response['Activities'][0]
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] detach_instances error: {e}')
 
-    def attach_instances(self, asg_name, instance_id):
+    def attach_instances(self, instance_id, asg_name):
         try:
             response = self.asg_client.attach_instances(
-                AutoScalingGroupNames=[
-                    asg_name,
-                ],
+                AutoScalingGroupName=asg_name,
                 InstanceIds=[
                     instance_id,
-                ],
+                ]
             )
             _LOGGER.debug(f'[AutoScalingConnector] attach_instances response : {response}')
-            return response['Activities'][0]
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] attach_instances error: {e}')
 
