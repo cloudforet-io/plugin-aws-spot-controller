@@ -36,13 +36,16 @@ class InstanceManager(BaseManager):
         for candidate in candidate_instance_types_info:
             instance_types.append(candidate['type'])
         spotPriceHistory = self.ec2_connector.describe_spot_price_history(instance_types, az)
-        spotPriceHistory.sort(key=lambda x: x['SpotPrice'], reverse=True)
+        spotPriceHistory.sort(key=lambda x: x['SpotPrice'])
         _LOGGER.debug(f'[sortCandidateInfosByPrice] spotPriceHistory: {spotPriceHistory}')
 
         for candidateInfo in candidateInfos:
             for spotInfo in spotPriceHistory:
                 if spotInfo['InstanceType'] == candidateInfo['type']:
-                    candidateInfo['spotPrice'] = spotInfo['SpotPrice']
+                    if 'spotPrice' not in candidateInfo:
+                        candidateInfo['spotPrice'] = spotInfo['SpotPrice']
+                    else:
+                        break
         candidateInfos.sort(key=lambda x: x['spotPrice'])
         _LOGGER.debug(f'[sortCandidateInfosByPrice] candidateInfos: {candidateInfos}')
 
