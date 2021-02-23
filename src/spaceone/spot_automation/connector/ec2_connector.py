@@ -2,6 +2,7 @@ __all__ = ["EC2Connector"]
 
 import boto3
 from boto3.session import Session
+import datetime
 import logging
 
 from spaceone.core.error import *
@@ -111,3 +112,12 @@ class EC2Connector(BaseConnector):
             return response['LaunchTemplateVersions'][0]
         except Exception as e:
             _LOGGER.error(f'[EC2Connector] describe_launch_template_versions error: {e}')
+
+    def describe_spot_price_history(self, instance_types, az):
+        try:
+            curTime = datetime.datetime.now()
+            response = self.ec2_client.describe_spot_price_history(InstanceTypes=instance_types, AvailabilityZone=az, StartTime=curTime, EndTime=curTime)
+            _LOGGER.debug(f'[EC2Connector] describe_spot_price_history response : {response}')
+            return response['SpotPriceHistory']
+        except Exception as e:
+            _LOGGER.error(f'[EC2Connector] describe_spot_price_history error: {e}')

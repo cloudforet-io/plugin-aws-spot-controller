@@ -171,9 +171,12 @@ class ControllerManager(BaseManager):
         if based_info is None:
             raise ERROR_NOT_FOUND(key='based_info', value=based_info)
 
-        for candidate_type_info in candidate_instance_types_info:
-            candidate_type = candidate_type_info['type']
-            price = candidate_type_info['price']
+        az = based_info['Placement']['AvailabilityZone']
+        candidate_infos = self.instance_manager.sortCandidateInfosByPrice(candidate_instance_types_info, az)
+
+        for candidate_info in candidate_infos:
+            candidate_type = candidate_info['type']
+            price = candidate_info['price']
 
             # Request input from based ondemand instance
             securityGroupIds = self._convertSecurityGroups(based_info['SecurityGroups'])
@@ -273,8 +276,12 @@ class ControllerManager(BaseManager):
             # Run instance with input
             _LOGGER.debug(f'[_createSpotInstance] input_request: {input_request}')
             spot_info = self.instance_manager.run_instances(input_request)
-
-        return spot_info
+            _LOGGER.debug(f'[_createSpotInstance] spot_info: {spot_info}')
+            if spot_info is None:
+                continue
+            else:
+                return spot_info
+        return None
 
     def _convertBlockDeviceMappings(self, lc):
         bds = []

@@ -30,6 +30,24 @@ class InstanceManager(BaseManager):
     def terminateOdInstance(self, instance_id):
         self.ec2_connector.terminate_instances(instance_id)
 
+    def sortCandidateInfosByPrice(self, candidate_instance_types_info, az):
+        candidateInfos = candidate_instance_types_info
+        instance_types = []
+        for candidate in candidate_instance_types_info:
+            instance_types.append(candidate['type'])
+        spotPriceHistory = self.ec2_connector.describe_spot_price_history(instance_types, az)
+        spotPriceHistory.sort(key=lambda x: x['SpotPrice'], reverse=True)
+        _LOGGER.debug(f'[sortCandidateInfosByPrice] spotPriceHistory: {spotPriceHistory}')
+
+        for candidateInfo in candidateInfos:
+            for spotInfo in spotPriceHistory:
+                if spotInfo['InstanceType'] == candidateInfo['type']:
+                    candidateInfo['spotPrice'] = spotInfo['SpotPrice']
+        candidateInfos.sort(key=lambda x: x['spotPrice'])
+        _LOGGER.debug(f'[sortCandidateInfosByPrice] candidateInfos: {candidateInfos}')
+
+        return candidateInfos
+
     def getNetworkInterfaces(self, lt_id, ver):
         lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
         if lt is not None and 'NetworkInterfaces' in lt['LaunchTemplateData']:
