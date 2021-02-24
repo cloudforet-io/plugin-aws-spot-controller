@@ -17,32 +17,17 @@ _TEMPLATE = {
             'Type': 'Choice',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
+            'ChoiceVariable': 'choice_response',
             'Choices': [
                 {
-                    'Valiable': 'response',
                     'StringEquals': 'Success',
-                    'Next': 'requestQueryToGetInstanceSpec'
+                    'Next': 'createSpotInstance'
                 },
                 {
-                    'Valiable': 'response',
                     'StringEquals': 'Fail',
                     'Next': 'finish'
                 }
             ]
-        },
-        'requestQueryToGetInstanceSpec': {
-            'Type': 'Task',
-            'RequestType': 'Query',
-            'RequestTarget': 'aws-spot-worker',
-            'Next': 'requestQueryToGetCandidateInfo',
-            'Query': 'select * from table where instanceType == {instanceType}'
-        },
-        'requestQueryToGetCandidateInfo': {
-            'Type': 'Task',
-            'RequestType': 'Query',
-            'RequestTarget': 'aws-spot-worker',
-            'Next': 'createSpotInstance',
-            'Query': 'select * from table where vCPU >= {vCPU} and GPU >= {GPU} and memory >= {memory} and EBSThroughput >= {EBSThroughput}'
         },
         'createSpotInstance': {
             'Type': 'Task',
@@ -54,21 +39,13 @@ _TEMPLATE = {
             'Type': 'Task',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
-            'Next': 'detachOndemandInstance',
+            'Next': 'replaceOnDemandInstanceWithSpot',
             'Retry': {
-                'Valiable': 'response',
-                'StringEquals': 'Fail',
                 'IntervalSeconds': 3,
                 'MaxAttempts': 5
             }
         },
-        'detachOndemandInstance': {
-            'Type': 'Task',
-            'RequestType': 'byPass',
-            'RequestTarget': 'aws-spot-controller',
-            'Next': 'attachSpotInstance'
-        },
-        'attachSpotInstance': {
+        'replaceOnDemandInstanceWithSpot': {
             'Type': 'Task',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
