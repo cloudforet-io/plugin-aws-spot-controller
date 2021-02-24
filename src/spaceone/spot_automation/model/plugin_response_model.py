@@ -55,7 +55,7 @@ _TEMPLATE = {
             'Type': 'Task',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
-            'Next': 'finish'
+            'Next': 'getAnyUnprotectedOndemandInstance'
         },
         'finish': {
             'Type': 'Succeed'
