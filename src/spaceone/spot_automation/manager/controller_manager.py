@@ -19,9 +19,8 @@ DEFAULT_REGION = 'us-east-1'
 GET_ANY_UNPROTECTED_OD_INSTANCE = "getAnyUnprotectedOndemandInstance"
 CREATE_SPOT_INSTANCE = "createSpotInstance"
 IS_CREATED_SPOT_INSTANCE = "IsCreatedSpotInstance"
-DETACH_OD_INSTANCE= "detachOndemandInstance"
-ATTACH_SPOT_INSTANCE= "attachSpotInstance"
-TERMINATE_OD_INSTANCE= "terminateOnDemandInstance"
+REPLACE_OD_INSTANCE_WITH_SPOT = "replaceOnDemandInstanceWithSpot"
+TERMINATE_OD_INSTANCE = "terminateOnDemandInstance"
 
 class ControllerManager(BaseManager):
 
@@ -101,15 +100,11 @@ class ControllerManager(BaseManager):
             result = self.instance_manager.isCreatedSpotInstance(spot_instance_id)
             res['response'] = result
 
-        elif action == DETACH_OD_INSTANCE:
+        elif action == REPLACE_OD_INSTANCE_WITH_SPOT:
             ondemand_instance_id = command['common_info']['ondemand_instance_id']
-            target_asg = command['common_info']['target_asg']
-            self.auto_scaling_manager.detachOdInstance(ondemand_instance_id, target_asg)
-
-        elif action == ATTACH_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
             target_asg = command['common_info']['target_asg']
-            self.auto_scaling_manager.attachSpotInstance(spot_instance_id, target_asg)
+            self.auto_scaling_manager.replaceOnDemandInstanceWithSpot(ondemand_instance_id, spot_instance_id, target_asg)
 
         elif action == TERMINATE_OD_INSTANCE:
             ondemand_instance_id = command['common_info']['ondemand_instance_id']
