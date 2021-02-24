@@ -55,8 +55,8 @@ class AutoScalingConnector(BaseConnector):
         try:
             response = self.asg_client.describe_auto_scaling_groups(
                 AutoScalingGroupNames=[
-                    asg_name,
-                ],
+                    asg_name
+                ]
             )
             _LOGGER.debug(f'[AutoScalingConnector] get_asg response : {response}')
             return response['AutoScalingGroups'][0]
@@ -67,8 +67,8 @@ class AutoScalingConnector(BaseConnector):
         try:
             response = self.asg_client.describe_auto_scaling_instances(
                 InstanceIds=[
-                    instance_id,
-                ],
+                    instance_id
+                ]
             )
             _LOGGER.debug(f'[AutoScalingConnector] get_asg_instances response : {response}')
             return response['AutoScalingInstances'][0]
@@ -80,7 +80,7 @@ class AutoScalingConnector(BaseConnector):
             response = self.asg_client.detach_instances(
                 AutoScalingGroupName=asg_name,
                 InstanceIds=[
-                    instance_id,
+                    instance_id
                 ],
                 ShouldDecrementDesiredCapacity=True
             )
@@ -93,7 +93,7 @@ class AutoScalingConnector(BaseConnector):
             response = self.asg_client.attach_instances(
                 AutoScalingGroupName=asg_name,
                 InstanceIds=[
-                    instance_id,
+                    instance_id
                 ]
             )
             _LOGGER.debug(f'[AutoScalingConnector] attach_instances response : {response}')
@@ -104,10 +104,20 @@ class AutoScalingConnector(BaseConnector):
         try:
             response = self.asg_client.describe_launch_configurations(
                 LaunchConfigurationNames=[
-                    lc_name,
-                ],
+                    lc_name
+                ]
             )
             _LOGGER.debug(f'[AutoScalingConnector] describe_launch_configurations response : {response}')
             return response['LaunchConfigurations'][0]
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] describe_launch_configurations error: {e}')
+
+    def update_auto_scaling_group(self, target_asg, max_size):
+        try:
+            response = self.asg_client.update_auto_scaling_group(
+                AutoScalingGroupName=asg_name,
+                MaxSize=max_size
+            )
+            _LOGGER.debug(f'[AutoScalingConnector] update_auto_scaling_group response : {response}')
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] update_auto_scaling_group error: {e}')

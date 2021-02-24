@@ -23,12 +23,28 @@ class AutoScalingManager(BaseManager):
         instance = self.auto_scaling_connector.get_asg_instances(resource_id)
         return instance
 
-    def detachOdInstance(self, instance_id, target_asg):
-        self.auto_scaling_connector.detach_instances(instance_id, target_asg)
+    def replaceOnDemandInstanceWithSpot(self, ondemand_instance_id, spot_instance_id, target_asg):
+        asgInfo = self.getAutoScalingGroup(target_asg)
+        desiredCapacity = asgInfo['DesiredCapacity']
+        maxSize = asgInfo['MaxSize']
 
-    def attachSpotInstance(self, instance_id, target_asg):
-        self.auto_scaling_connector.attach_instances(instance_id, target_asg)
+        # Attach Spot instance
+        if desiredCapacity == maxSize:
+            self._setAutoScalingMaxSize(target_asg, maxSize+1)
+        self.auto_scaling_connector.attach_instances(spot_instance_id, target_asg)
+
+        # Detach OnDemand instance
+        self.auto_scaling_connector.detach_instances(ondemand_instance_id, target_asg)
+        if desiredCapacity == maxSize:
+            self._setAutoScalingMaxSize(target_asg, maxSize)
 
     def getLaunchConfiguration(self, lc_name):
         lc = self.auto_scaling_connector.describe_launch_configurations(lc_name)
         return lc
+
+    ######################
+    # Internal
+    ######################
+
+    def _setAutoScalingMaxSize(self, target_asg, max_size):
+        self.auto_scaling_connector.update_auto_scaling_group(target_asg, max_size)
