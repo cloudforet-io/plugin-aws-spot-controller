@@ -3,7 +3,8 @@ kind: Deployment
 metadata:
   name: aws-spot-controller
   labels:
-    domain_id: domain-46d44d33623b
+    service_type: spot_automation.Controller
+    domain_id: domain-c5eda5293fd5
     plugin_name: aws-spot-controller
     supervisor_name: root
     version: "1.0"
@@ -12,14 +13,16 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      domain_id: domain-46d44d33623b
+      service_type: spot_automation.Controller
+      domain_id: domain-c5eda5293fd5
       plugin_name: aws-spot-controller
       supervisor_name: root
       version: "1.0"
   template:
     metadata:
       labels:
-        domain_id: domain-46d44d33623b
+        service_type: spot_automation.Controller
+        domain_id: domain-c5eda5293fd5
         plugin_name: aws-spot-controller
         supervisor_name: root
         version: "1.0"
