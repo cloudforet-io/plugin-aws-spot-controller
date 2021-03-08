@@ -11,4 +11,3 @@ deploy:
   kubectl:
     manifests:
       - ./deployments.yml
-      - ./aws-plugin-svc.yml
