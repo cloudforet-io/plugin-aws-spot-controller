@@ -62,6 +62,8 @@ class ControllerManager(BaseManager):
         self.instance_manager.set_client(secret_data)
         self.auto_scaling_manager.set_client(secret_data)
 
+        response = 'Success'
+
         if action == GET_ANY_UNPROTECTED_OD_INSTANCE:
             asg_name = command['resource_id']
             spot_group_option = None
@@ -71,15 +73,14 @@ class ControllerManager(BaseManager):
             onDemand_info = self._getAnyUnprotectedOndemandInstance(asg_name, spot_group_option)
             _LOGGER.debug(f'[patch] onDemand_info: {onDemand_info}')
             if onDemand_info == None:
-                res['response'] = 'Fail'
-                return res
-            res['instance_info'] = onDemand_info
-            res['common_info'] = {
-                'target_asg': asg_name,
-                'ondemand_instance_id': onDemand_info['InstanceId']
-            }
-            res['query_input_param'] = {'instanceType': onDemand_info['InstanceType']}
-            res['response'] = 'Success'
+                res['choice_response'] = 'Fail'
+            else:
+                res['choice_response'] = 'Success'
+                res['instance_info'] = onDemand_info
+                res['common_info'] = {
+                    'target_asg': asg_name,
+                    'ondemand_instance_id': onDemand_info['InstanceId']
+                }
 
         elif action == CREATE_SPOT_INSTANCE:
             based_instance_id = command['common_info']['ondemand_instance_id']
@@ -97,8 +98,7 @@ class ControllerManager(BaseManager):
         elif action == IS_CREATED_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
 
-            result = self.instance_manager.isCreatedSpotInstance(spot_instance_id)
-            res['response'] = result
+            response = self.instance_manager.isCreatedSpotInstance(spot_instance_id)
 
         elif action == REPLACE_OD_INSTANCE_WITH_SPOT:
             ondemand_instance_id = command['common_info']['ondemand_instance_id']
@@ -112,6 +112,8 @@ class ControllerManager(BaseManager):
 
         else:
             raise ERROR_NOT_FOUND(key='action', value=action)
+
+        res['response'] = response
 
         return res
 
