@@ -3,6 +3,7 @@ __all__ = ['ControllerManager']
 import time
 import logging
 import json
+import re
 
 from spaceone.core.manager import BaseManager
 from spaceone.spot_automation.manager.auto_scaling_manager import AutoScalingManager
@@ -63,7 +64,8 @@ class ControllerManager(BaseManager):
         self.auto_scaling_manager.set_client(secret_data)
 
         if action == GET_ANY_UNPROTECTED_OD_INSTANCE:
-            asg_name = command['resource_id']
+            resource_id = command['resource_id']
+            asg_name = self._parse_asg_name(resource_id)
             spot_group_option = None
             if 'spot_group_option' in command:
                 spot_group_option = command['spot_group_option']
@@ -357,3 +359,16 @@ class ControllerManager(BaseManager):
                 tag['Key'] != "LaunchTemplateVersion" and tag['Key'] != "LaunchConfiguationName":
                 tags['Tags'].append(tag)
         return tags
+
+        def _parse_asg_name(self, resource_id):
+            """
+            ASG example : arn:aws:autoscaling:ap-northeast-2:431645317804:autoScalingGroup:41d6f9ef-59e3-49ea-bb53-ad464d3b320b:autoScalingGroupName/eng-apne2-cluster-banana
+            """
+            parsed_resource_id = ''
+            _LOGGER.debug(f'[_parse_asg_name] resource_id: {resource_id}')
+            try:
+                parsed_resource_id = (re.findall('autoScalingGroupName/(.+)', resource_id))[0]
+            except AttributeError as e:
+                raise e
+
+            return parsed_resource_id
