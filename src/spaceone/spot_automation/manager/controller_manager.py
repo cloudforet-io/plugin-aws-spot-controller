@@ -362,15 +362,15 @@ class ControllerManager(BaseManager):
                 tags['Tags'].append(tag)
         return tags
 
-        def _parse_asg_name(self, resource_id):
-            """
-            ASG example : arn:aws:autoscaling:ap-northeast-2:431645317804:autoScalingGroup:41d6f9ef-59e3-49ea-bb53-ad464d3b320b:autoScalingGroupName/eng-apne2-cluster-banana
-            """
-            parsed_resource_id = ''
-            _LOGGER.debug(f'[_parse_asg_name] resource_id: {resource_id}')
-            try:
-                parsed_resource_id = (re.findall('autoScalingGroupName/(.+)', resource_id))[0]
-            except AttributeError as e:
-                raise e
+    def _parse_asg_name(self, resource_id):
+        """
+        ASG example : arn:aws:autoscaling:ap-northeast-2:431645317804:autoScalingGroup:41d6f9ef-59e3-49ea-bb53-ad464d3b320b:autoScalingGroupName/eng-apne2-cluster-banana
+        """
+        parsed_resource_id = ''
+        _LOGGER.debug(f'[_parse_asg_name] resource_id: {resource_id}')
+        try:
+            parsed_resource_id = (re.findall('autoScalingGroupName/(.+)', resource_id))[0]
+        except AttributeError as e:
+            raise e
 
-            return parsed_resource_id
+        return parsed_resource_id
