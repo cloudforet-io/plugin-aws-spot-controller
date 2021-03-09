@@ -55,7 +55,7 @@ _TEMPLATE = {
             'Type': 'Task',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
-            'IntervalSeconds': 30,
+            'IntervalSeconds': 60,
             'Next': 'getAnyUnprotectedOndemandInstance'
         },
         'finish': {
