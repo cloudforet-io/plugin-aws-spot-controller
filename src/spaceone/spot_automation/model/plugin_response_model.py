@@ -41,7 +41,7 @@ _TEMPLATE = {
             'RequestTarget': 'aws-spot-controller',
             'Next': 'replaceOnDemandInstanceWithSpot',
             'Retry': {
-                'IntervalSeconds': 3,
+                'IntervalSeconds': 15,
                 'MaxAttempts': 5
             }
         },
@@ -55,6 +55,7 @@ _TEMPLATE = {
             'Type': 'Task',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
+            'IntervalSeconds': 30,
             'Next': 'getAnyUnprotectedOndemandInstance'
         },
         'finish': {
