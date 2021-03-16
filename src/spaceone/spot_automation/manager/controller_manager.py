@@ -3,6 +3,7 @@ __all__ = ['ControllerManager']
 import time
 import logging
 import json
+import re
 
 from spaceone.core.manager import BaseManager
 from spaceone.spot_automation.manager.auto_scaling_manager import AutoScalingManager
@@ -62,8 +63,11 @@ class ControllerManager(BaseManager):
         self.instance_manager.set_client(secret_data)
         self.auto_scaling_manager.set_client(secret_data)
 
+        response = 'Success'
+
         if action == GET_ANY_UNPROTECTED_OD_INSTANCE:
-            asg_name = command['resource_id']
+            resource_id = command['resource_id']
+            asg_name = self._parse_asg_name(resource_id)
             spot_group_option = None
             if 'spot_group_option' in command:
                 spot_group_option = command['spot_group_option']
@@ -71,15 +75,14 @@ class ControllerManager(BaseManager):
             onDemand_info = self._getAnyUnprotectedOndemandInstance(asg_name, spot_group_option)
             _LOGGER.debug(f'[patch] onDemand_info: {onDemand_info}')
             if onDemand_info == None:
-                res['response'] = 'Fail'
-                return res
-            res['instance_info'] = onDemand_info
-            res['common_info'] = {
-                'target_asg': asg_name,
-                'ondemand_instance_id': onDemand_info['InstanceId']
-            }
-            res['query_input_param'] = {'instanceType': onDemand_info['InstanceType']}
-            res['response'] = 'Success'
+                res['choice_response'] = 'Fail'
+            else:
+                res['choice_response'] = 'Success'
+                res['instance_info'] = onDemand_info
+                res['common_info'] = {
+                    'target_asg': asg_name,
+                    'ondemand_instance_id': onDemand_info['InstanceId']
+                }
 
         elif action == CREATE_SPOT_INSTANCE:
             based_instance_id = command['common_info']['ondemand_instance_id']
@@ -97,8 +100,7 @@ class ControllerManager(BaseManager):
         elif action == IS_CREATED_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
 
-            result = self.instance_manager.isCreatedSpotInstance(spot_instance_id)
-            res['response'] = result
+            response = self.instance_manager.isCreatedSpotInstance(spot_instance_id)
 
         elif action == REPLACE_OD_INSTANCE_WITH_SPOT:
             ondemand_instance_id = command['common_info']['ondemand_instance_id']
@@ -112,6 +114,8 @@ class ControllerManager(BaseManager):
 
         else:
             raise ERROR_NOT_FOUND(key='action', value=action)
+
+        res['response'] = response
 
         return res
 
@@ -357,3 +361,16 @@ class ControllerManager(BaseManager):
                 tag['Key'] != "LaunchTemplateVersion" and tag['Key'] != "LaunchConfiguationName":
                 tags['Tags'].append(tag)
         return tags
+
+    def _parse_asg_name(self, resource_id):
+        """
+        ASG example : arn:aws:autoscaling:ap-northeast-2:431645317804:autoScalingGroup:41d6f9ef-59e3-49ea-bb53-ad464d3b320b:autoScalingGroupName/eng-apne2-cluster-banana
+        """
+        parsed_resource_id = ''
+        _LOGGER.debug(f'[_parse_asg_name] resource_id: {resource_id}')
+        try:
+            parsed_resource_id = (re.findall('autoScalingGroupName/(.+)', resource_id))[0]
+        except AttributeError as e:
+            raise e
+
+        return parsed_resource_id
