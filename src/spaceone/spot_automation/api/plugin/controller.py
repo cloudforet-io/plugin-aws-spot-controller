@@ -30,6 +30,7 @@ class Controller(BaseAPI, controller_pb2_grpc.ControllerServicer):
 
         with self.locator.get_service('ControllerService', metadata) as controller_svc:
             result = controller_svc.patch(params)
+            _LOGGER.debug(f'[patch] result: {result}')
             return self.locator.get_info('ResponseInfo', result)
 
     def get_instance_count_status(self, request, context):
@@ -37,4 +38,5 @@ class Controller(BaseAPI, controller_pb2_grpc.ControllerServicer):
 
         with self.locator.get_service('ControllerService', metadata) as controller_svc:
             result = controller_svc.get_instance_count_status(params)
-            return self.locator.get_info('StatusInfo', result)
+            _LOGGER.debug(f'[get_instance_count_status] result: {result}')
+            return self.locator.get_info('HistoryInfo', result)

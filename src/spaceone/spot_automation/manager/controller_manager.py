@@ -122,10 +122,16 @@ class ControllerManager(BaseManager):
 
     def get_instance_count_status(self, resource_id, secret_data):
         _LOGGER.debug(f'[get_instance_count_status] resource_id: {resource_id}')
-        asg = self._parse_asg_name(resource_id)
+        self.auto_scaling_manager.set_client(secret_data)
+        self.instance_manager.set_client(secret_data)
+
+        asg_name = self._parse_asg_name(resource_id)
+        asg = self.auto_scaling_manager.getAutoScalingGroup(asg_name)
+
         ondemandCount = self._getInstanceCount(asg, OD_INSTANCE)
         spotCount = self._getInstanceCount(asg, SPOT_INSTANCE)
         total = ondemandCount + spotCount
+        res = {}
         res['history_info'] = {
             'ondemandCount': ondemandCount,
             'spotCount': spotCount,
@@ -166,6 +172,9 @@ class ControllerManager(BaseManager):
         return None
 
     def _getInstanceCount(self, asg, lifecycle):
+        _LOGGER.debug(f'[_getInstanceCount] asg: {asg}')
+        if asg is None:
+            return 0
         odNum = 0
         instanceLifeCycle = lifecycle
 
@@ -386,6 +395,7 @@ class ControllerManager(BaseManager):
         _LOGGER.debug(f'[_parse_asg_name] resource_id: {resource_id}')
         try:
             parsed_resource_id = (re.findall('autoScalingGroupName/(.+)', resource_id))[0]
+            _LOGGER.debug(f'[_parse_asg_name] parsed_resource_id: {parsed_resource_id}')
         except AttributeError as e:
             raise e
 
