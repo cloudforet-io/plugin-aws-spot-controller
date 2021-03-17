@@ -15,12 +15,12 @@ class AutoScalingManager(BaseManager):
     def set_client(self, secret_data):
         self.auto_scaling_connector.set_client(secret_data)
 
-    def getAutoScalingGroup(self, resource_id):
-        autoScalingGroup = self.auto_scaling_connector.get_asg(resource_id)
+    def getAutoScalingGroup(self, asg_name):
+        autoScalingGroup = self.auto_scaling_connector.get_asg(asg_name)
         return autoScalingGroup
 
-    def getAsgInstance(self, resource_id):
-        instance = self.auto_scaling_connector.get_asg_instances(resource_id)
+    def getAsgInstance(self, instance_id):
+        instance = self.auto_scaling_connector.get_asg_instances(instance_id)
         return instance
 
     def replaceOnDemandInstanceWithSpot(self, ondemand_instance_id, spot_instance_id, target_asg):
