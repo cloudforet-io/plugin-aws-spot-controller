@@ -30,4 +30,5 @@ class Controller(BaseAPI, controller_pb2_grpc.ControllerServicer):
 
         with self.locator.get_service('ControllerService', metadata) as controller_svc:
             result = controller_svc.patch(params)
+            _LOGGER.debug(f'[patch] result: {result}')
             return self.locator.get_info('ResponseInfo', result)

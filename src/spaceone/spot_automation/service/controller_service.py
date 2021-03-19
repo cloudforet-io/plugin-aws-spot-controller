@@ -67,3 +67,20 @@ class ControllerService(BaseService):
         result = {}
         result['data'] = res
         return result
+
+    @transaction
+    @check_required(['resource_id', 'secret_data'])
+    def get_instance_count_status(self, params):
+        """ verify options capability
+        Args:
+            params
+              - resource_id: str
+              - secret_data: dict
+
+        Returns:
+        """
+        secret_data = params['secret_data']
+        resource_id = params['resource_id']
+
+        res = self.controller_manager.get_instance_count_status(resource_id, secret_data)
+        return res

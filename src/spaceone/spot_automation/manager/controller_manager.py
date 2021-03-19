@@ -14,7 +14,8 @@ from spaceone.core.error import ERROR_NOT_FOUND
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_REGION = 'us-east-1'
+OD_INSTANCE = 'scheduled'
+SPOT_INSTANCE = 'spot'
 
 # Action list
 GET_ANY_UNPROTECTED_OD_INSTANCE = "getAnyUnprotectedOndemandInstance"
@@ -119,6 +120,25 @@ class ControllerManager(BaseManager):
 
         return res
 
+    def get_instance_count_status(self, resource_id, secret_data):
+        _LOGGER.debug(f'[get_instance_count_status] resource_id: {resource_id}')
+        self.auto_scaling_manager.set_client(secret_data)
+        self.instance_manager.set_client(secret_data)
+
+        asg_name = self._parse_asg_name(resource_id)
+        asg = self.auto_scaling_manager.getAutoScalingGroup(asg_name)
+
+        ondemandCount = self._getInstanceCount(asg, OD_INSTANCE)
+        spotCount = self._getInstanceCount(asg, SPOT_INSTANCE)
+        total = ondemandCount + spotCount
+        res = {}
+        res['history_info'] = {
+            'ondemandCount': ondemandCount,
+            'spotCount': spotCount,
+            'total': total
+        }
+        return res
+
     ######################
     # Internal
     ######################
@@ -131,7 +151,7 @@ class ControllerManager(BaseManager):
 
         # Check minimum ondemand instance count with spot_group_option
         if spot_group_option and 'min_ondemand_size' in spot_group_option:
-            ondemandCount = self._getOndemandCount(asg)
+            ondemandCount = self._getInstanceCount(asg, OD_INSTANCE)
             if spot_group_option['min_ondemand_size'] >= ondemandCount:
                 _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less than request, ondemandCount: {ondemandCount}')
                 return None
@@ -151,13 +171,18 @@ class ControllerManager(BaseManager):
 
         return None
 
-    def _getOndemandCount(self, asg):
+    def _getInstanceCount(self, asg, lifecycle):
+        _LOGGER.debug(f'[_getInstanceCount] asg: {asg}')
+        if asg is None:
+            return 0
         odNum = 0
+        instanceLifeCycle = lifecycle
+
         for instance_info in asg['Instances']:
             instance_id = instance_info['InstanceId']
             instance = self.instance_manager.get_ec2_instance(instance_id)
             state = instance['State']['Name']
-            if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == 'scheduled' and \
+            if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and \
                 state == 'running':
                 odNum += 1
 
@@ -370,6 +395,7 @@ class ControllerManager(BaseManager):
         _LOGGER.debug(f'[_parse_asg_name] resource_id: {resource_id}')
         try:
             parsed_resource_id = (re.findall('autoScalingGroupName/(.+)', resource_id))[0]
+            _LOGGER.debug(f'[_parse_asg_name] parsed_resource_id: {parsed_resource_id}')
         except AttributeError as e:
             raise e
 
