@@ -21,7 +21,7 @@ RUN pip install --upgrade pip && \
 #COPY api/python ${API_DIR}
 
 ARG CACHEBUST=1
-RUN pip install --upgrade --pre spaceone-core
+RUN pip install --upgrade --pre spaceone-core spaceone-api
 
 COPY src ${SRC_DIR}
 WORKDIR ${SRC_DIR}
