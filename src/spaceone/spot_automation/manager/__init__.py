@@ -4,3 +4,5 @@ from spaceone.spot_automation.manager.auto_scaling_manager import AutoScalingMan
 from spaceone.spot_automation.manager.instance_manager import InstanceManager
 from spaceone.spot_automation.manager.history_manager import HistoryManager
 from spaceone.spot_automation.manager.interrupt_manager import InterruptManager
+from spaceone.spot_automation.manager.events_manager import EventsManager
+from spaceone.spot_automation.manager.sns_manager import SNSManager
