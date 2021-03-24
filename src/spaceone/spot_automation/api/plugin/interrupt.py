@@ -16,7 +16,7 @@ class Interrupt(BaseAPI, interrupt_pb2_grpc.InterruptServicer):
         with self.locator.get_service('InterruptService', metadata) as interrupt_svc:
             result = interrupt_svc.setup(params)
             _LOGGER.debug(f'[setup] result: {result}')
-            return self.locator.get_info('EmptyInfo', result)
+            return self.locator.get_info('EmptyInfo')
 
     def handle(self, request, context):
         params, metadata = self.parse_request(request, context)
@@ -24,4 +24,4 @@ class Interrupt(BaseAPI, interrupt_pb2_grpc.InterruptServicer):
         with self.locator.get_service('InterruptService', metadata) as interrupt_svc:
             result = interrupt_svc.handle(params)
             _LOGGER.debug(f'[setup] handle: {result}')
-            return self.locator.get_info('EmptyInfo', result)
+            return self.locator.get_info('EmptyInfo')
