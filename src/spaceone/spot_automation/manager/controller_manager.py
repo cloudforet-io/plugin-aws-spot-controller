@@ -208,8 +208,8 @@ class ControllerManager(BaseManager):
         originalODPrice = self.pricing_manager.getOndemandPrice(based_info['InstanceType'], region)
 
         for candidate_info in candidate_infos:
-            candidate_type = candidate_info['type']
-            spotPrice = candidate_info['spotPrice']
+            candidate_type = candidate_info['InstanceType']
+            spotPrice = float(candidate_info['SpotPrice'])
             if spotPrice > originalODPrice:
                 return None
 
