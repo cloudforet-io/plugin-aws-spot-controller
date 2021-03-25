@@ -5,3 +5,5 @@ from spaceone.spot_automation.manager.instance_manager import InstanceManager
 from spaceone.spot_automation.manager.history_manager import HistoryManager
 from spaceone.spot_automation.manager.interrupt_manager import InterruptManager
 from spaceone.spot_automation.manager.pricing_manager import PricingManager
+from spaceone.spot_automation.manager.events_manager import EventsManager
+from spaceone.spot_automation.manager.sns_manager import SNSManager
