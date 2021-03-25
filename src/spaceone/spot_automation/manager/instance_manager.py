@@ -30,12 +30,14 @@ class InstanceManager(BaseManager):
     def terminateOdInstance(self, instance_id):
         self.ec2_connector.terminate_instances(instance_id)
 
-    def sortCandidateInfosByPrice(self, candidate_instance_types_info, az):
-        candidateInfos = candidate_instance_types_info
-        instance_types = []
-        for candidate in candidate_instance_types_info:
-            instance_types.append(candidate['type'])
-        spotPriceHistory = self.ec2_connector.describe_spot_price_history(instance_types, az)
+    def sortCandidateInfosByPrice(self, candidate_instance_types, az):
+        candidateInfos = []
+        for candidate_instance_type in candidate_instance_types:
+            instanceType = {
+                'type': candidate_instance_type
+            }
+            candidateInfos.append(instanceType)
+        spotPriceHistory = self.ec2_connector.describe_spot_price_history(candidate_instance_types, az)
         spotPriceHistory.sort(key=lambda x: x['SpotPrice'])
         _LOGGER.debug(f'[sortCandidateInfosByPrice] spotPriceHistory: {spotPriceHistory}')
 
@@ -43,7 +45,7 @@ class InstanceManager(BaseManager):
             for spotInfo in spotPriceHistory:
                 if spotInfo['InstanceType'] == candidateInfo['type']:
                     if 'spotPrice' not in candidateInfo:
-                        candidateInfo['spotPrice'] = spotInfo['SpotPrice']
+                        candidateInfo['spotPrice'] = float(spotInfo['SpotPrice'])
                     else:
                         break
         candidateInfos.sort(key=lambda x: x['spotPrice'])
