@@ -1,2 +1,3 @@
 from spaceone.spot_automation.connector.ec2_connector import EC2Connector
 from spaceone.spot_automation.connector.auto_scaling_connector import AutoScalingConnector
+from spaceone.spot_automation.connector.pricing_connector import PricingConnector
