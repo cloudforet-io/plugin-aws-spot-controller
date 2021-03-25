@@ -186,10 +186,14 @@ class ControllerManager(BaseManager):
             instance_id = instance_info['InstanceId']
             instance = self.instance_manager.get_ec2_instance(instance_id)
             state = instance['State']['Name']
-            if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and \
+            if instanceLifeCycle == SPOT_INSTANCE:
+                if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and \
                 state == 'running':
-                odNum += 1
-
+                    odNum += 1
+            if instanceLifeCycle == OD_INSTANCE:
+                if state == 'running':
+                    if ('InstanceLifecycle' not in instance) or ('InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle):
+                        odNum += 1
         return odNum
 
     def _createSpotInstance(self, based_instance_id, target_asg, candidate_types, region):
