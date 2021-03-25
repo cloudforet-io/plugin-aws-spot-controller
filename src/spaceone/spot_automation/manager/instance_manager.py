@@ -30,26 +30,30 @@ class InstanceManager(BaseManager):
     def terminateOdInstance(self, instance_id):
         self.ec2_connector.terminate_instances(instance_id)
 
-    def sortCandidateInfosByPrice(self, candidate_instance_types_info, az):
-        candidateInfos = candidate_instance_types_info
-        instance_types = []
-        for candidate in candidate_instance_types_info:
-            instance_types.append(candidate['type'])
-        spotPriceHistory = self.ec2_connector.describe_spot_price_history(instance_types, az)
+    def sortCandidateInfosByPrice(self, candidate_instance_types, az):
+        # candidateInfos = []
+        # for candidate_instance_type in candidate_instance_types:
+        #     instanceType = {
+        #         'type': candidate_instance_type
+        #     }
+        #     candidateInfos.append(instanceType)
+
+        _LOGGER.debug(f'[sortCandidateInfosByPrice] candidate_instance_types: {candidate_instance_types}')
+        spotPriceHistory = self.ec2_connector.describe_spot_price_history(candidate_instance_types, az)
         spotPriceHistory.sort(key=lambda x: x['SpotPrice'])
         _LOGGER.debug(f'[sortCandidateInfosByPrice] spotPriceHistory: {spotPriceHistory}')
 
-        for candidateInfo in candidateInfos:
-            for spotInfo in spotPriceHistory:
-                if spotInfo['InstanceType'] == candidateInfo['type']:
-                    if 'spotPrice' not in candidateInfo:
-                        candidateInfo['spotPrice'] = spotInfo['SpotPrice']
-                    else:
-                        break
-        candidateInfos.sort(key=lambda x: x['spotPrice'])
-        _LOGGER.debug(f'[sortCandidateInfosByPrice] candidateInfos: {candidateInfos}')
+        # for candidateInfo in candidateInfos:
+        #     for spotInfo in spotPriceHistory:
+        #         if spotInfo['InstanceType'] == candidateInfo['type']:
+        #             if 'spotPrice' not in candidateInfo:
+        #                 candidateInfo['spotPrice'] = float(spotInfo['SpotPrice'])
+        #             else:
+        #                 break
+        # candidateInfos.sort(key=lambda x: x['spotPrice'])
+        # _LOGGER.debug(f'[sortCandidateInfosByPrice] candidateInfos: {candidateInfos}')
 
-        return candidateInfos
+        return spotPriceHistory
 
     def getNetworkInterfaces(self, lt_id, ver):
         lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)

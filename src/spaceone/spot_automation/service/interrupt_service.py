@@ -9,11 +9,12 @@ class InterruptService(BaseService):
         self.interrupt_manager: InterruptManager = self.locator.get_manager('InterruptManager')
 
     @transaction
-    @check_required(['secret_data'])
+    @check_required(['endpoint', 'secret_data'])
     def setup(self, params):
+        endpoint = params['endpoint']
         secret_data = params['secret_data']
 
-        res = self.interrupt_manager.setup(secret_data)
+        res = self.interrupt_manager.setup(endpoint, secret_data)
         return res
 
     @transaction

@@ -116,7 +116,7 @@ class EC2Connector(BaseConnector):
     def describe_spot_price_history(self, instance_types, az):
         try:
             curTime = datetime.datetime.now()
-            response = self.ec2_client.describe_spot_price_history(InstanceTypes=instance_types, AvailabilityZone=az, StartTime=curTime, EndTime=curTime)
+            response = self.ec2_client.describe_spot_price_history(InstanceTypes=instance_types, AvailabilityZone=az, ProductDescriptions=['Linux/UNIX'], StartTime=curTime, EndTime=curTime)
             _LOGGER.debug(f'[EC2Connector] describe_spot_price_history response : {response}')
             return response['SpotPriceHistory']
         except Exception as e:

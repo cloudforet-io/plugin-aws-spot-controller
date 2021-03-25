@@ -8,6 +8,7 @@ import re
 from spaceone.core.manager import BaseManager
 from spaceone.spot_automation.manager.auto_scaling_manager import AutoScalingManager
 from spaceone.spot_automation.manager.instance_manager import InstanceManager
+from spaceone.spot_automation.manager.pricing_manager import PricingManager
 
 from spaceone.core.error import ERROR_NOT_FOUND
 
@@ -30,6 +31,7 @@ class ControllerManager(BaseManager):
         super().__init__(transaction)
         self.auto_scaling_manager: AutoScalingManager = self.locator.get_manager('AutoScalingManager')
         self.instance_manager: InstanceManager = self.locator.get_manager('InstanceManager')
+        self.pricing_manager: PricingManager = self.locator.get_manager('PricingManager')
 
     def verify(self, secret_data, region_name):
         """ Check connection
@@ -63,6 +65,7 @@ class ControllerManager(BaseManager):
             }
         self.instance_manager.set_client(secret_data)
         self.auto_scaling_manager.set_client(secret_data)
+        self.pricing_manager.set_client(secret_data)
 
         response = 'Success'
 
@@ -88,8 +91,8 @@ class ControllerManager(BaseManager):
         elif action == CREATE_SPOT_INSTANCE:
             based_instance_id = command['common_info']['ondemand_instance_id']
             target_asg = command['common_info']['target_asg']
-            candidate_instance_types_info = command['candidate_instance_types_info']
-            spot_info = self._createSpotInstance(based_instance_id, target_asg, candidate_instance_types_info)
+            candidate_types = command['candidate_types']
+            spot_info = self._createSpotInstance(based_instance_id, target_asg, candidate_types, secret_data['region_name'])
             _LOGGER.debug(f'[patch] spot_info: {spot_info}')
             if spot_info != None:
                 res['common_info'] = {
@@ -150,9 +153,10 @@ class ControllerManager(BaseManager):
             return None
 
         # Check minimum ondemand instance count with spot_group_option
-        if spot_group_option and 'min_ondemand_size' in spot_group_option:
+        # TODO: RATIO type should be considered here
+        if spot_group_option and 'min_ondemand' in spot_group_option and spot_group_option['min_ondemand']['type'] == 'COUNT':
             ondemandCount = self._getInstanceCount(asg, OD_INSTANCE)
-            if spot_group_option['min_ondemand_size'] >= ondemandCount:
+            if spot_group_option['min_ondemand']['value'] >= ondemandCount:
                 _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less than request, ondemandCount: {ondemandCount}')
                 return None
 
@@ -182,13 +186,17 @@ class ControllerManager(BaseManager):
             instance_id = instance_info['InstanceId']
             instance = self.instance_manager.get_ec2_instance(instance_id)
             state = instance['State']['Name']
-            if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and \
+            if instanceLifeCycle == SPOT_INSTANCE:
+                if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and \
                 state == 'running':
-                odNum += 1
-
+                    odNum += 1
+            if instanceLifeCycle == OD_INSTANCE:
+                if state == 'running':
+                    if ('InstanceLifecycle' not in instance) or ('InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle):
+                        odNum += 1
         return odNum
 
-    def _createSpotInstance(self, based_instance_id, target_asg, candidate_instance_types_info):
+    def _createSpotInstance(self, based_instance_id, target_asg, candidate_types, region):
         based_info = self.instance_manager.get_ec2_instance(based_instance_id)
         _LOGGER.debug(f'[_createSpotInstance] based_info: {based_info}')
 
@@ -196,11 +204,14 @@ class ControllerManager(BaseManager):
             raise ERROR_NOT_FOUND(key='based_info', value=based_info)
 
         az = based_info['Placement']['AvailabilityZone']
-        candidate_infos = self.instance_manager.sortCandidateInfosByPrice(candidate_instance_types_info, az)
+        candidate_infos = self.instance_manager.sortCandidateInfosByPrice(candidate_types, az)
+        originalODPrice = self.pricing_manager.getOndemandPrice(based_info['InstanceType'], region)
 
         for candidate_info in candidate_infos:
-            candidate_type = candidate_info['type']
-            price = candidate_info['price']
+            candidate_type = candidate_info['InstanceType']
+            spotPrice = float(candidate_info['SpotPrice'])
+            if spotPrice > originalODPrice:
+                return None
 
             # Request input from based ondemand instance
             securityGroupIds = self._convertSecurityGroups(based_info['SecurityGroups'])
@@ -213,7 +224,7 @@ class ControllerManager(BaseManager):
                 'InstanceMarketOptions': {
                     'MarketType': 'spot',
                     'SpotOptions': {
-                        'MaxPrice': str(price),
+                        'MaxPrice': str(spotPrice),
                     },
                 },
 
