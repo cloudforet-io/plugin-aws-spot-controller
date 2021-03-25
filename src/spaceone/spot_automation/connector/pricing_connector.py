@@ -54,7 +54,7 @@ class PricingConnector(BaseConnector):
         }
 
         session = Session(**params)
-        _LOGGER.debug(f'[AutoScalingConnector] get_session session : {session}')
+        _LOGGER.debug(f'[get_session] get_session session : {session}')
 
         # ASSUME ROLE
         if role_arn := secret_data.get('role_arn'):
