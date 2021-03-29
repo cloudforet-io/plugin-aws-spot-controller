@@ -24,8 +24,9 @@ class InterruptManager(BaseManager):
         self.events_manager.set_client(secret_data)
         self.sns_manager.set_client(secret_data)
 
-        topic_name = 'cumulus-spot-interrupt-sns'
-        rule_name = 'cumulus-spot-interrupt-event'
+        token = endpoint.split('/')[-1]
+        topic_name = 'spaceone-interrupt-sns-' + token
+        rule_name = 'spaceone-interrupt-event-' + token
         event_pattern = '{"source":["aws.ec2"], "detail-type":["EC2 Spot Instance Interruption Warning"]}'
         protocol = endpoint.split(':')[0]
 
@@ -47,9 +48,14 @@ class InterruptManager(BaseManager):
         res = {}
         return res
 
-    def handle(self, spot_group_resource_id, resource_id, secret_data):
+    def confirm(self, data, secret_data):
         # TODO implementation
-        _LOGGER.debug(f'[handle] spot_group_resource_id: {spot_group_resource_id},'
-                      f'resource_id: {resource_id},secret_data: {secret_data}')
+        _LOGGER.debug(f'[confirm] data: {data},secret_data: {secret_data}')
+        res = {}
+        return res
+
+    def handle(self, data, secret_data):
+        # TODO implementation
+        _LOGGER.debug(f'[handle] data: {data},secret_data: {secret_data}')
         res = {}
         return res

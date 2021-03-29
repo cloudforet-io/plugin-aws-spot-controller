@@ -18,11 +18,19 @@ class InterruptService(BaseService):
         return res
 
     @transaction
-    @check_required(['spot_group_resource_id', 'resource_id', 'secret_data'])
-    def handle(self, params):
-        spot_group_resource_id = params['spot_group_resource_id']
-        resource_id = params['resource_id']
+    @check_required(['data', 'secret_data'])
+    def confirm(self, params):
+        data = params['data']
         secret_data = params['secret_data']
 
-        res = self.interrupt_manager.handle(spot_group_resource_id, resource_id, secret_data)
+        res = self.interrupt_manager.setup(data, secret_data)
+        return res
+
+    @transaction
+    @check_required(['data', 'secret_data'])
+    def handle(self, params):
+        data = params['data']
+        secret_data = params['secret_data']
+
+        res = self.interrupt_manager.handle(data, secret_data)
         return res
