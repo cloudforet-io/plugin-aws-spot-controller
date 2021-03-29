@@ -18,6 +18,14 @@ class Interrupt(BaseAPI, interrupt_pb2_grpc.InterruptServicer):
             _LOGGER.debug(f'[setup] result: {result}')
             return self.locator.get_info('EmptyInfo')
 
+    def confirm(self, request, context):
+        params, metadata = self.parse_request(request, context)
+
+        with self.locator.get_service('InterruptService', metadata) as interrupt_svc:
+            result = interrupt_svc.confirm(params)
+            _LOGGER.debug(f'[confirm] result: {result}')
+            return self.locator.get_info('EmptyInfo')
+
     def handle(self, request, context):
         params, metadata = self.parse_request(request, context)
 
