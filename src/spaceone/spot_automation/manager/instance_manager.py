@@ -63,3 +63,14 @@ class InstanceManager(BaseManager):
                 return True, nis
 
         return False, None
+
+    def getAutoScalingGroupNameFromTag(self, instance_id):
+        tags = self.ec2_connector.describe_instances(instance_id)['Tags']
+
+        asg_name = ''
+
+        for tag in tags:
+            if tag['Key'] == 'aws:autoscaling:groupName':
+                asg_name = tag['Value']
+
+        return asg_name

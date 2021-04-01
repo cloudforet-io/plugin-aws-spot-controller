@@ -75,14 +75,14 @@ class AutoScalingConnector(BaseConnector):
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] get_asg_instances error: {e}')
 
-    def detach_instances(self, instance_id, asg_name):
+    def detach_instances(self, instance_id, asg_name, decrement_desired_capacity=True):
         try:
             response = self.asg_client.detach_instances(
                 AutoScalingGroupName=asg_name,
                 InstanceIds=[
                     instance_id
                 ],
-                ShouldDecrementDesiredCapacity=True
+                ShouldDecrementDesiredCapacity=decrement_desired_capacity
             )
             _LOGGER.debug(f'[AutoScalingConnector] detach_instances response : {response}')
         except Exception as e:
@@ -115,9 +115,28 @@ class AutoScalingConnector(BaseConnector):
     def update_auto_scaling_group(self, target_asg, max_size):
         try:
             response = self.asg_client.update_auto_scaling_group(
-                AutoScalingGroupName=asg_name,
+                AutoScalingGroupName=target_asg,
                 MaxSize=max_size
             )
             _LOGGER.debug(f'[AutoScalingConnector] update_auto_scaling_group response : {response}')
         except Exception as e:
             _LOGGER.error(f'[AutoScalingConnector] update_auto_scaling_group error: {e}')
+
+    def describe_lifecycle_hooks(self, asg_name):
+        try:
+            response = self.asg_client.describe_lifecycle_hooks(AutoScalingGroupName=asg_name)
+            _LOGGER.debug(f'[AutoScalingConnector] describe_lifecycle_hooks response : {response}')
+            return response['LifecycleHooks']
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] describe_lifecycle_hooks error: {e}')
+
+    def terminate_instance_in_auto_scaling_group(self, instance_id, decrement_desired_capacity=False):
+        try:
+            response = self.asg_client.terminate_instance_in_auto_scaling_group(
+                InstanceId=instance_id,
+                ShouldDecrementDesiredCapacity=decrement_desired_capacity
+            )
+            _LOGGER.debug(f'[AutoScalingConnector] terminate_instance_in_auto_scaling_group response : {response}')
+            return response
+        except Exception as e:
+            _LOGGER.error(f'[AutoScalingConnector] terminate_instance_in_auto_scaling_group error: {e}')

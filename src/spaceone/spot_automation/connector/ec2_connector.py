@@ -121,3 +121,11 @@ class EC2Connector(BaseConnector):
             return response['SpotPriceHistory']
         except Exception as e:
             _LOGGER.error(f'[EC2Connector] describe_spot_price_history error: {e}')
+
+    def describe_instances(self, instance_id):
+        try:
+            response = self.ec2_client.describe_instances(InstanceIds=[instance_id])
+            _LOGGER.debug(f'[EC2Connector] describe_instances response : {response}')
+            return response['Reservations'][0]['Instances'][0]
+        except Exception as e:
+            _LOGGER.error(f'[EC2Connector] describe_instances error: {e}')
