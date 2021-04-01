@@ -8,6 +8,7 @@ python-consul
 # Plugin Packages
 botocore
 boto3
+requests
 
 # Spaceone Packages
 spaceone-core
