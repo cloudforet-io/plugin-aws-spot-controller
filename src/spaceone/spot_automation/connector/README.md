@@ -92,8 +92,8 @@
 - Boto3 info
   - Client : events
   - API used
-    - [put_rule()](https://https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_rule)
-    - [put_targets()](https://https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets)
+    - [put_rule()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_rule)
+    - [put_targets()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/events.html#EventBridge.Client.put_targets)
     
 
 ### Required Policy
@@ -125,7 +125,7 @@
 - Boto3 info
   - Client : pricing
   - API used
-    - [get_products()](https://https://https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.get_products)
+    - [get_products()](https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/pricing.html#Pricing.Client.get_products)
     
 
 ### Required Policy

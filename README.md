@@ -2,7 +2,7 @@
 
 **Plugin to control spot automation**
 
-> SpaceONE's [plugin-aws-spot-automation-controller](https://github.sec.samsung.net/OPSARCH/plugin-aws-spot-automation-controller) is a convenient tool to manage spot instance automatically from AWS.
+> SpaceONE's plugin-aws-spot-automation-controller is a convenient tool to manage spot instance automatically from AWS.
 
 ---
 
