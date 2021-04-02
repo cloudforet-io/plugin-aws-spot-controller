@@ -153,11 +153,17 @@ class ControllerManager(BaseManager):
             return None
 
         # Check minimum ondemand instance count with spot_group_option
-        # TODO: RATIO type should be considered here
-        if spot_group_option and 'min_ondemand' in spot_group_option and spot_group_option['min_ondemand']['type'] == 'COUNT':
-            ondemandCount = self._getInstanceCount(asg, OD_INSTANCE)
-            if spot_group_option['min_ondemand']['value'] >= ondemandCount:
-                _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less than request, ondemandCount: {ondemandCount}')
+        if spot_group_option and 'min_ondemand' in spot_group_option:
+            curOnDemandCount = self._getInstanceCount(asg, OD_INSTANCE)
+            min_ondemand_num = 0
+            if spot_group_option['min_ondemand']['type'] == 'COUNT':
+                min_ondemand_num = int(spot_group_option['min_ondemand']['value'])
+            elif spot_group_option['min_ondemand']['type'] == 'RATIO':
+                requestRatio = spot_group_option['min_ondemand']['value']
+                min_ondemand_num = int(len(asg['Instances']) * (requestRatio/100))
+            if min_ondemand_num >= curOnDemandCount:
+                _LOGGER.debug(f'[_getAnyUnprotectedOndemandInstance] minimum OD count is less \
+                                than request, curOnDemandCount: {curOnDemandCount}, min_ondemand_num: {min_ondemand_num}')
                 return None
 
         for instance_info in asg['Instances']:
