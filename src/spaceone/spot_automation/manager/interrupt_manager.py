@@ -67,18 +67,14 @@ class InterruptManager(BaseManager):
         return res
 
     def handle(self, data, secret_data):
-
         data = json.loads(json.loads(data)['Message'])
-
-        secret_data['region_name'] = data['region']
-
+        # secret_data['region_name'] = data['region']
         _LOGGER.debug(f'[handle] data: {data},secret_data: {secret_data}')
 
         self.instance_manager.set_client(secret_data)
         self.auto_scaling_manager.set_client(secret_data)
 
         instance_id = data['detail']['instance-id']
-
         asg_name = self.instance_manager.getAutoScalingGroupNameFromTag(instance_id)
 
         if self.auto_scaling_manager.hasTerminationLifecycleHook(asg_name):
@@ -86,5 +82,13 @@ class InterruptManager(BaseManager):
         else:
             self.auto_scaling_manager.detachInstance(instance_id, asg_name)
 
-        res = {}
+        asg = self.auto_scaling_manager.getAutoScalingGroup(asg_name)
+        instance = self.instance_manager.get_ec2_instance(instance_id)
+
+        res = {
+            'spot_group_resource_id': asg['AutoScalingGroupARN'],
+            'resource_id': instance['InstanceId'],
+            'type': instance['InstanceType']
+        }
+
         return res
