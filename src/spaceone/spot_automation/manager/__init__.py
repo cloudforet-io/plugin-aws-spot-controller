@@ -7,3 +7,4 @@ from spaceone.spot_automation.manager.interrupt_manager import InterruptManager
 from spaceone.spot_automation.manager.pricing_manager import PricingManager
 from spaceone.spot_automation.manager.events_manager import EventsManager
 from spaceone.spot_automation.manager.sns_manager import SNSManager
+from spaceone.spot_automation.manager.cost_saving_manager import CostSavingManager

@@ -1,3 +1,4 @@
 from spaceone.spot_automation.service.controller_service import ControllerService
 from spaceone.spot_automation.service.history_service import HistoryService
 from spaceone.spot_automation.service.interrupt_service import InterruptService
+from spaceone.spot_automation.service.cost_saving_service import CostSavingService

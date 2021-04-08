@@ -56,13 +56,17 @@ class InstanceManager(BaseManager):
         return spotPriceHistory
 
     def getNetworkInterfaces(self, lt_id, ver):
-        lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
+        lt = self.getLaunchTemplate(lt_id, ver)
         if lt is not None and 'NetworkInterfaces' in lt['LaunchTemplateData']:
             nis = lt['LaunchTemplateData']['NetworkInterfaces']
             if len(nis) > 0:
                 return True, nis
 
         return False, None
+
+    def getLaunchTemplate(self, lt_id, ver):
+        lt = self.ec2_connector.describe_launch_template_versions(lt_id, ver)
+        return lt
 
     def getAutoScalingGroupNameFromTag(self, instance_id):
         tags = self.ec2_connector.describe_instances(instance_id)['Tags']
