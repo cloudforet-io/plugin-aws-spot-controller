@@ -42,6 +42,21 @@ class AutoScalingManager(BaseManager):
         lc = self.auto_scaling_connector.describe_launch_configurations(lc_name)
         return lc
 
+    def detachInstance(self, instance_id, asg_name):
+        self.auto_scaling_connector.detach_instances(instance_id, asg_name, False)
+
+    def terminateInstanceInAutoScalingGroup(self, instance_id):
+        self.auto_scaling_connector.terminate_instance_in_auto_scaling_group(instance_id)
+
+    def hasTerminationLifecycleHook(self, asg_name):
+        result = self.auto_scaling_connector.describe_lifecycle_hooks(asg_name)
+
+        for lifecycle_hook in result:
+            if lifecycle_hook['LifecycleTransition '] == 'autoscaling:EC2_INSTANCE_TERMINATING':
+                return True
+
+        return False
+
     ######################
     # Internal
     ######################
