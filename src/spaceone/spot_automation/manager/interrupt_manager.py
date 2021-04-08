@@ -31,8 +31,8 @@ class InterruptManager(BaseManager):
         self.sns_manager.set_client(secret_data)
 
         token = endpoint.split('/')[-1]
-        topic_name = 'spaceone-interrupt-sns-' + token[:20]
-        rule_name = 'spaceone-interrupt-event-' + token[:20]
+        topic_name = 'spaceone-interrupt-sns-' + token
+        rule_name = 'spaceone-interrupt-event-' + token
         event_pattern = '{"source":["aws.ec2"], "detail-type":["EC2 Spot Instance Interruption Warning"]}'
         protocol = endpoint.split(':')[0]
 
