@@ -11,8 +11,7 @@ class CostSavingService(BaseService):
     @transaction
     @check_required(['resource_id', 'secret_data'])
     def get(self, params):
-        resource_id = params['resource_id']
         secret_data = params['secret_data']
-
+        resource_id = params['resource_id']
         res = self.cost_saving_manager.get(resource_id, secret_data)
         return res
