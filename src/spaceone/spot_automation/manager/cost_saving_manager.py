@@ -41,10 +41,12 @@ class CostSavingManager(BaseManager):
             ltVer = asg['LaunchTemplate']['Version']
             lt = self.instance_manager.getLaunchTemplate(ltId, ltVer)
             originalInstanceType = lt['LaunchTemplateData']['InstanceType']
-        normal = {
-            'type': originalInstanceType,
-            'count': desiredCapacity
-        }
+        normal = [
+            {
+                'type': originalInstanceType,
+                'count': desiredCapacity
+            }
+        ]
 
         # Current ASG info
         saving = []
@@ -88,7 +90,7 @@ class CostSavingManager(BaseManager):
         res = {}
         res['cost_saving_info'] = {
             'resource_id': resource_id,
-            'calc_demensions': {
+            'calc_dimensions': {
                 'normal': normal,
                 'saving': saving
             }
