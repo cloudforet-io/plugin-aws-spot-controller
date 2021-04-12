@@ -13,6 +13,5 @@ class CostSavingService(BaseService):
     def get(self, params):
         secret_data = params['secret_data']
         resource_id = params['resource_id']
-
         res = self.cost_saving_manager.get(resource_id, secret_data)
         return res
