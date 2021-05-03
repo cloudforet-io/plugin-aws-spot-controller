@@ -23,7 +23,7 @@ class InterruptService(BaseService):
         data = params['data']
         secret_data = params['secret_data']
 
-        res = self.interrupt_manager.setup(data, secret_data)
+        res = self.interrupt_manager.confirm(data, secret_data)
         return res
 
     @transaction
