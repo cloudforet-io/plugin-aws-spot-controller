@@ -1,29 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: aws-spot-controller
+  name: aws-spot-automation-controller
   labels:
-    service_type: spot_automation.Controller
-    domain_id: domain-c5eda5293fd5
-    plugin_name: aws-spot-controller
+    service_type: spot-automation.Controller
+    domain_id: domain-ba0e63c07629
+    plugin_name: aws-spot-automation-controller
     supervisor_name: root
     version: "1.0"
-  namespace: spaceone
+  namespace: root-supervisor
 spec:
   replicas: 1
   selector:
     matchLabels:
-      service_type: spot_automation.Controller
-      domain_id: domain-c5eda5293fd5
-      plugin_name: aws-spot-controller
+      service_type: spot-automation.Controller
+      domain_id: domain-ba0e63c07629
+      plugin_name: aws-spot-automation-controller
       supervisor_name: root
       version: "1.0"
   template:
     metadata:
       labels:
-        service_type: spot_automation.Controller
-        domain_id: domain-c5eda5293fd5
-        plugin_name: aws-spot-controller
+        service_type: spot-automation.Controller
+        domain_id: domain-ba0e63c07629
+        plugin_name: aws-spot-automation-controller
         supervisor_name: root
         version: "1.0"
     spec:
@@ -34,5 +34,3 @@ spec:
         - containerPort: 50051
           protocol: TCP
         imagePullPolicy: Always
-      nodeSelector:
-        node.kubernetes.io/lifecycle: spot

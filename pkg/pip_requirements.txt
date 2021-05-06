@@ -12,5 +12,5 @@ requests
 
 # Spaceone Packages
 spaceone-core
-#spaceone-api
+spaceone-api
 schematics
