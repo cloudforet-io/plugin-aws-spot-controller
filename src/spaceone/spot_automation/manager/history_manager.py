@@ -43,18 +43,20 @@ class HistoryManager(BaseManager):
         _LOGGER.debug(f'[_get_instance_count] asg: {asg}')
         if asg is None:
             return 0
-        odNum = 0
+        cnt = 0
         instanceLifeCycle = lifecycle
 
         for instance_info in asg['Instances']:
             instance_id = instance_info['InstanceId']
             instance = self.instance_manager.get_ec2_instance(instance_id)
             state = instance['State']['Name']
-            if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and \
-                state == 'running':
-                odNum += 1
-
-        return odNum
+            if lifecycle == SPOT_INSTANCE:
+                if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and state == 'running':
+                    cnt += 1
+            else:
+                if state == 'running':
+                    cnt += 1
+        return cnt
 
     def _parse_asg_name(self, resource_id):
         """
