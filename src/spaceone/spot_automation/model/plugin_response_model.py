@@ -27,15 +27,25 @@ _TEMPLATE = {
                 },
                 {
                     'StringEquals': 'Fail',
-                    'Next': 'finish'
+                    'Next': 'Finish'
                 }
             ]
         },
         'createSpotInstance': {
-            'Type': 'Task',
+            'Type': 'Choice',
             'RequestType': 'byPass',
             'RequestTarget': 'aws-spot-controller',
-            'Next': 'IsCreatedSpotInstance'
+            'ChoiceVariable': 'choice_response',
+            'Choices': [
+                {
+                    'StringEquals': 'Success',
+                    'Next': 'IsCreatedSpotInstance'
+                },
+                {
+                    'StringEquals': 'Fail',
+                    'Next': 'Fail'
+                }
+            ]
         },
         'IsCreatedSpotInstance': {
             'Type': 'Task',
@@ -44,7 +54,7 @@ _TEMPLATE = {
             'Next': 'replaceOnDemandInstanceWithSpot',
             'Retry': {
                 'IntervalSeconds': 15,
-                'MaxAttempts': 5
+                'MaxAttempts': 100
             }
         },
         'replaceOnDemandInstanceWithSpot': {
@@ -60,7 +70,7 @@ _TEMPLATE = {
             'IntervalSeconds': 60,
             'Next': 'getAnyUnprotectedOndemandInstance'
         },
-        'finish': {
+        'Finish': {
             'Type': 'Succeed'
         }
     }

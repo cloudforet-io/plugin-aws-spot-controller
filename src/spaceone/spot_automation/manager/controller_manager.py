@@ -92,14 +92,18 @@ class ControllerManager(BaseManager):
             based_instance_id = command['common_info']['ondemand_instance_id']
             target_asg = command['common_info']['target_asg']
             candidate_types = command['candidate_types']
-            spot_info = self._createSpotInstance(based_instance_id, target_asg, candidate_types, secret_data['region_name'])
+            spot_info, reason = self._createSpotInstance(based_instance_id, target_asg, candidate_types, secret_data['region_name'])
             _LOGGER.debug(f'[patch] spot_info: {spot_info}')
             if spot_info != None:
+                res['choice_response'] = 'Success'
                 res['common_info'] = {
                     'target_asg': target_asg,
                     'ondemand_instance_id': based_instance_id,
                     'spot_instance_id': spot_info['InstanceId']
                 }
+            else:
+                res['choice_response'] = 'Fail'
+                res['reason'] = reason
 
         elif action == IS_CREATED_SPOT_INSTANCE:
             spot_instance_id = command['common_info']['spot_instance_id']
@@ -205,6 +209,7 @@ class ControllerManager(BaseManager):
     def _createSpotInstance(self, based_instance_id, target_asg, candidate_types, region):
         based_info = self.instance_manager.get_ec2_instance(based_instance_id)
         _LOGGER.debug(f'[_createSpotInstance] based_info: {based_info}')
+        reason = None
 
         if based_info is None:
             raise ERROR_NOT_FOUND(key='based_info', value=based_info)
@@ -217,33 +222,32 @@ class ControllerManager(BaseManager):
             candidate_type = candidate_info['InstanceType']
             spotPrice = float(candidate_info['SpotPrice'])
             if spotPrice > originalODPrice:
-                return None
+                reason = 'No cheaper spot instance'
+                return None, reason
 
             # Request input from based ondemand instance
             securityGroupIds = self._convertSecurityGroups(based_info['SecurityGroups'])
             subnetId = ''
             if 'SubnetId' in based_info:
                 subnetId = based_info['SubnetId']
-            input_request = {
-                'EbsOptimized': based_info['EbsOptimized'],
-
-                'InstanceMarketOptions': {
-                    'MarketType': 'spot',
-                    'SpotOptions': {
-                        'MaxPrice': str(spotPrice),
+                input_request = {
+                    'EbsOptimized': based_info['EbsOptimized'],
+                    'InstanceMarketOptions': {
+                        'MarketType': 'spot',
+                        'SpotOptions': {
+                            'MaxPrice': str(spotPrice),
+                        },
                     },
-                },
+                    'InstanceType': candidate_type,
+                    'MaxCount': 1,
+                    'MinCount': 1,
 
-                'InstanceType': candidate_type,
-                'MaxCount': 1,
-                'MinCount': 1,
+                    'Placement': based_info['Placement'],
 
-                'Placement': based_info['Placement'],
+                    'SecurityGroupIds': securityGroupIds,
 
-                'SecurityGroupIds': securityGroupIds,
-
-                'SubnetId': subnetId
-            }
+                    'SubnetId': subnetId
+                }
             
             instance = self.auto_scaling_manager.getAsgInstance(based_instance_id)
             _LOGGER.debug(f'[_createSpotInstance] instance: {instance}')
@@ -321,8 +325,10 @@ class ControllerManager(BaseManager):
             if spot_info is None:
                 continue
             else:
-                return spot_info
-        return None
+                return spot_info, reason
+
+        reason = 'No available spot instance'
+        return None, reason
 
     def _convertBlockDeviceMappings(self, lc):
         bds = []
