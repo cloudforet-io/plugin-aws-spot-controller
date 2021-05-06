@@ -54,7 +54,7 @@ class HistoryManager(BaseManager):
                 if 'InstanceLifecycle' in instance and instance['InstanceLifecycle'] == instanceLifeCycle and state == 'running':
                     cnt += 1
             else:
-                if state == 'running':
+                if ('InstanceLifecycle' not in instance or instance['InstanceLifecycle'] == instanceLifeCycle) and state == 'running':
                     cnt += 1
         return cnt
 
